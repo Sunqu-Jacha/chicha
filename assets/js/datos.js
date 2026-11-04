@@ -26,7 +26,7 @@ export async function cargarDatos({ url, fetchFn = globalThis.fetch, almacen = g
   const copia = almacen ? leerCopia(almacen) : null;
   if (copia && alGuardado) { try { alGuardado(copia); } catch { /* el aviso no debe romper la carga */ } }
   try {
-    const resp = await fetchFn(url + '?accion=datos', { signal: AbortSignal.timeout(tiempoLimiteMs) });
+    const resp = await fetchFn(url + '?accion=datos', (typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? { signal: AbortSignal.timeout(tiempoLimiteMs) } : {}));
     if (!resp || !resp.ok) throw new Error('respuesta no ok');
     const datos = await resp.json();
     if (!esDatosValidos(datos)) throw new Error('forma inválida');
