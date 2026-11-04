@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://sunqujacha.github.io/chicha/sitemap.xml

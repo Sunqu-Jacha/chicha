@@ -33,6 +33,10 @@ p { margin: 0 0 var(--e-4); }
   outline-offset: 2px;
 }
 #vista:focus { outline: none; }
+/* Sobre fondo negro (pie) el anillo negro desaparece: anillo blanco. */
+.pie :focus-visible { outline-color: var(--blanco); }
+/* El botón flotante puede quedar sobre el pie negro: anillo doble negro + blanco, visible sobre claro y oscuro. */
+#btn-anadir:focus-visible { outline: 3px solid var(--negro); outline-offset: 2px; box-shadow: 0 0 0 2px var(--blanco); }
 
 .saltar {
   position: absolute;

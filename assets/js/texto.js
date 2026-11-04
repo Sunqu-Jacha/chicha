@@ -28,7 +28,7 @@ export function urlSegura(u, { mailto = false } = {}) {
   if (!texto) return null;
   if (mailto) {
     const correo = texto.replace(/^mailto:/i, '');
-    if (CORREO.test(correo)) return `mailto:${correo}`;
+    if (!/[%\p{Cc}]/u.test(correo) && CORREO.test(correo)) return `mailto:${correo}`;
   }
   try {
     const url = new URL(texto);

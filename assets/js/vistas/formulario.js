@@ -349,6 +349,7 @@ function mostrarErrores(form, errores) {
   return primero;
 }
 
+const TIEMPO_ENVIO_MS = 30000;
 const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export function abrirFormulario({ modo = 'elegir', datos, registroId = '' } = {}) {
@@ -372,6 +373,7 @@ export function abrirFormulario({ modo = 'elegir', datos, registroId = '' } = {}
 
   function pintar(nuevo) {
     estado.modo = nuevo;
+    dlg.removeAttribute('aria-describedby');
     dlg.innerHTML = htmlFormulario(nuevo, datos, registroId);
     const form = dlg.querySelector('form');
     if (form) {
@@ -390,7 +392,8 @@ export function abrirFormulario({ modo = 'elegir', datos, registroId = '' } = {}
   function exito() {
     dlg.innerHTML = '<div class="form__panel"><button type="button" class="btn form__cerrar" data-cerrar-form>Cerrar</button>'
       + '<h2 id="form-titulo" class="form__titulo" tabindex="-1">¡Gracias!</h2>'
-      + `<p role="status">${esc(MSG_EXITO)}</p></div>`;
+      + `<p id="form-exito" role="status">${esc(MSG_EXITO)}</p></div>`;
+    dlg.setAttribute('aria-describedby', 'form-exito');
     dlg.querySelector('#form-titulo').focus();
   }
 
@@ -422,6 +425,7 @@ export function abrirFormulario({ modo = 'elegir', datos, registroId = '' } = {}
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({ tipo: modoEnvio, datos: d, t0 }),
+        signal: AbortSignal.timeout(TIEMPO_ENVIO_MS),
       });
       respuesta = await r.json();
     } catch { respuesta = null; }
@@ -459,7 +463,7 @@ export function abrirFormulario({ modo = 'elegir', datos, registroId = '' } = {}
   // Mientras se envía no se puede cerrar: así siempre se ve el resultado y no se burla la guarda de doble envío.
   dlg.addEventListener('cancel', (e) => { if (estado.enviando) e.preventDefault(); });
   dlg.addEventListener('close', () => {
-    if (estado.enviando) { dlg.showModal(); return; }
+    if (estado.enviando) { if (dlg.isConnected) dlg.showModal(); return; }
     dlg.remove();
     const destino = opener && opener.isConnected ? opener : document.getElementById('vista');
     if (destino) destino.focus();

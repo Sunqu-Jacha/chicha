@@ -26,3 +26,10 @@ test('urlSegura con mailto solo cuando se pide', () => {
   assert.equal(urlSegura('a b@x.org', { mailto: true }), null);
   assert.equal(urlSegura('"><x@y.org', { mailto: true }), null);
 });
+
+test('urlSegura mailto rechaza % y caracteres de control', () => {
+  assert.equal(urlSegura('a%0Abcc%3Ax@y.org', { mailto: true }), null);
+  assert.equal(urlSegura('a\x01b@y.org', { mailto: true }), null);
+  assert.equal(urlSegura('a\tb@y.org', { mailto: true }), null);
+  assert.equal(urlSegura('ok@y.org', { mailto: true }), 'mailto:ok@y.org');
+});

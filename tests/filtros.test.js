@@ -34,3 +34,10 @@ test('contarPorValor departamento', () => {
   assert.equal(m.get('cusco'), 2); assert.equal(m.get('lima'), 2);
 });
 test('contarPorValor multivalor', () => assert.equal(contarPorValor(todos, 'ofrece').get('formacion'), 2));
+test('AND entre los cinco grupos a la vez', () => {
+  const c = { ...criteriosVacios(), sectores: ['musica'], tipos: ['fondo'], departamentos: ['lima'], presencia: ['nacional'], ofrece: ['financiamiento-y-fondos'] };
+  assert.deepEqual(ids(filtrarAgentes(todos, c)), ['c']);
+  assert.deepEqual(ids(filtrarAgentes(todos, { ...c, tipos: ['colectivo'] })), []);
+  assert.deepEqual(ids(filtrarAgentes(todos, { ...c, presencia: ['local'] })), []);
+  assert.deepEqual(ids(filtrarAgentes(todos, { ...c, sectores: ['patrimonio'] })), []);
+});

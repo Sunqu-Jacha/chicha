@@ -68,3 +68,14 @@ test('almacén que lanza no rompe', async () => {
   const r2 = await cargarDatos({ url: 'u', fetchFn: fetchCaido, almacen });
   assert.equal(r2.origen, 'ninguno');
 });
+
+test('fetch que nunca responde: el tiempo límite cae a la copia local', async () => {
+  const almacen = almacenFalso({ [CLAVE_DATOS]: JSON.stringify(D('vieja')) });
+  const colgado = (u, { signal } = {}) => new Promise((_, rechazar) => {
+    if (signal) signal.addEventListener('abort', () => rechazar(signal.reason));
+  });
+  const r = await cargarDatos({ url: 'https://x/exec', fetchFn: colgado, almacen, tiempoLimiteMs: 30 });
+  assert.equal(r.origen, 'local'); assert.equal(r.datos.generado, 'vieja');
+  const r2 = await cargarDatos({ url: 'https://x/exec', fetchFn: colgado, almacen: almacenFalso(), tiempoLimiteMs: 30 });
+  assert.equal(r2.origen, 'ninguno');
+});

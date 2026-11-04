@@ -15,7 +15,7 @@ export function renderSobre() {
 
   <h2>Cómo colaborar</h2>
   <p>No necesitas crear una cuenta. Usa el botón "+ Añadir" para proponer un agente o una convocatoria. Si ves un dato que debe corregirse, abre la ficha del agente y elige "Sugerir un cambio".</p>
-  <p><button type="button" class="btn btn--primario" data-anadir>Añadir un agente o una convocatoria</button></p>
+  <p><button type="button" class="btn" data-anadir>Añadir un agente o una convocatoria</button></p>
 
   <h2 id="privacidad">Aviso de privacidad</h2>
   <p>Al enviar una propuesta pedimos tu consentimiento para usar tu correo únicamente con el fin de informarte del resultado, conforme a la Ley N.º 29733, Ley de Protección de Datos Personales.</p>

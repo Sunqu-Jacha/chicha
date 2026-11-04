@@ -9,6 +9,7 @@ import { renderFicha } from '../assets/js/vistas/ficha.js';
 import { renderConvocatorias } from '../assets/js/vistas/convocatorias.js';
 import { renderSobre } from '../assets/js/vistas/sobre.js';
 import { validos } from '../assets/js/app.js';
+import { estadoConvocatoria } from '../assets/js/convocatorias.js';
 
 const ejemplo = JSON.parse(readFileSync(new URL('../assets/datos-ejemplo.json', import.meta.url), 'utf8'));
 
@@ -68,6 +69,10 @@ test('renderPortada: buscador, un chip por ofrece y contadores', () => {
   assert.ok(html.includes('href="#/explorar?ofrece=financiamiento-y-fondos"'));
   const peru = ejemplo.agentes.filter((a) => a.capa === 'Perú').length;
   assert.ok(html.includes(`>${peru}<`));
+  const deps = new Set(ejemplo.agentes.filter((a) => a.capa === 'Perú').map((a) => a.departamento).filter(Boolean)).size;
+  const abiertas = ejemplo.convocatorias.filter((c) => estadoConvocatoria(c, '2026-11-04').estado === 'abierta').length;
+  assert.match(html, new RegExp(`>${deps}</span><span class="contadores__t">Departamentos`));
+  assert.match(html, new RegExp(`>${abiertas}</span><span class="contadores__t">Convocatorias abiertas`));
 });
 
 test('renderExplorar sin resultados muestra el estado vacío', () => {
