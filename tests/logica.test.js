@@ -174,3 +174,74 @@ test('paraRenovar omite las ya duplicadas', () => {
   ], 2027);
   laxo(r.map((x) => x.id), ['2']);
 });
+
+// ---- Ronda de correcciones 1 ----
+test('esSpam: t0 ausente, null o vacío es spam', () => {
+  assert.equal(gs.esSpam({ sitio_web_2: '' }, 99999), true);
+  assert.equal(gs.esSpam({ t0: null }, 99999), true);
+  assert.equal(gs.esSpam({ t0: '' }, 99999), true);
+  assert.equal(gs.esSpam({ t0: 'abc' }, 99999), true);
+});
+
+test('validarEnvio rechaza tipos incorrectos', () => {
+  const con = (extra) => gs.validarEnvio('agente', Object.assign(agenteOk(), extra), LISTAS, APROBADOS);
+  assert.equal(con({ ofrece: 'Formación' }).ofrece, 'Elige una opción de la lista.');
+  assert.equal(con({ sectores: [{}] }).sectores, 'Elige una opción de la lista.');
+  assert.equal(con({ tipo_entidad: ['Centro cultural'] }).tipo_entidad, 'Elige una opción de la lista.');
+  assert.equal(con({ presencia: { a: 1 } }).presencia, 'Elige una opción de la lista.');
+  assert.equal(con({ departamento: ['Cusco'] }).departamento, 'Elige una opción de la lista.');
+  assert.ok(con({ nombre: { x: 1 } }).nombre);
+  assert.ok(con({ ciudad: true }).ciudad);
+  assert.ok(con({ web: ['https://x.pe'] }).web);
+  assert.ok(con({ nombre_proponente: ['Ana'] }).nombre_proponente);
+  assert.equal(con({ consentimiento: 'true' }).consentimiento, 'Necesitamos tu consentimiento para guardar tu correo.');
+  const c = gs.validarEnvio('convocatoria', Object.assign(convOk(), { tipo: ['fondo'] }), LISTAS, APROBADOS);
+  assert.equal(c.tipo, 'Elige una opción de la lista.');
+});
+
+test('validarEnvio limita campos de texto a 2000 caracteres', () => {
+  const largo = 'x'.repeat(2001);
+  const e = gs.validarEnvio('agente', Object.assign(agenteOk(), { ciudad: largo, direccion: largo, nombre: largo }), LISTAS, APROBADOS);
+  assert.equal(e.ciudad, 'Máximo 2000 caracteres.');
+  assert.equal(e.direccion, 'Máximo 2000 caracteres.');
+  assert.equal(e.nombre, 'Máximo 2000 caracteres.');
+  laxo(gs.validarEnvio('agente', Object.assign(agenteOk(), { ciudad: 'x'.repeat(2000) }), LISTAS, APROBADOS), {});
+  const c = gs.validarEnvio('convocatoria', Object.assign(convOk(), { titulo: largo, monto: largo }), LISTAS, APROBADOS);
+  assert.equal(c.titulo, 'Máximo 2000 caracteres.');
+  assert.equal(c.monto, 'Máximo 2000 caracteres.');
+});
+
+test('validarEnvio convocatoria: fechas y año', () => {
+  const con = (extra) => gs.validarEnvio('convocatoria', Object.assign(convOk(), extra), LISTAS, APROBADOS);
+  const F = 'Usa el formato AAAA-MM-DD.';
+  assert.equal(con({ fecha_cierre: '14/03/2027' }).fecha_cierre, F);
+  assert.equal(con({ fecha_cierre: '2027-02-30' }).fecha_cierre, F);
+  assert.equal(con({ fecha_apertura: 'mañana' }).fecha_apertura, F);
+  assert.equal(con({ fecha_resultados: '2027-13-01' }).fecha_resultados, F);
+  assert.equal(con({ fecha_cierre: '' }).fecha_cierre, 'Este campo es obligatorio.');
+  laxo(con({ fecha_apertura: '2027-02-01', fecha_resultados: '2027-05-01' }), {});
+  assert.equal(con({ anio: 1999 }).anio, 'Revisa el año.');
+  assert.equal(con({ anio: 2101 }).anio, 'Revisa el año.');
+  assert.equal(con({ anio: 2027.5 }).anio, 'Revisa el año.');
+  assert.equal(con({ anio: 'dos mil' }).anio, 'Revisa el año.');
+  assert.equal(con({ anio: [2027] }).anio, 'Revisa el año.');
+  laxo(con({ anio: '2027' }), {});
+  laxo(con({ anio: 2027 }), {});
+});
+
+test('fechaIso devuelve null si no es AAAA-MM-DD válida', () => {
+  assert.equal(gs.fechaIso('14/02/2027'), null);
+  assert.equal(gs.fechaIso('mañana'), null);
+  assert.equal(gs.fechaIso('2027-02-30'), null);
+  assert.equal(gs.fechaIso(1800000000000), null);
+  assert.equal(gs.fechaIso('2027-03-14'), '2027-03-14');
+  assert.equal(gs.publicar([filaConv({ fecha_apertura: '01/02/2027' })], gs.PUBLICAS_CONVOCATORIAS)[0].fechaApertura, null);
+});
+
+test('R7: agente Internacional sin departamento no da error de departamento', () => {
+  const e = gs.validarEnvio('agente', Object.assign(agenteOk(), { presencia: LISTAS.presencia[1], departamento: '' }), LISTAS, APROBADOS);
+  assert.ok(!('departamento' in e));
+  laxo(e, {});
+  const p = gs.validarEnvio('agente', Object.assign(agenteOk(), { departamento: '' }), LISTAS, APROBADOS);
+  assert.equal(p.departamento, 'Este campo es obligatorio.');
+});

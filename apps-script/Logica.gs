@@ -56,16 +56,17 @@ function separarMulti(v) {
 }
 
 function fechaIso(v) {
+  var r = fechaIsoCruda(v);
+  return esFechaIso(r) ? r : null;
+}
+
+function fechaIsoCruda(v) {
   if (v === null || v === undefined || v === '') return null;
-  if (typeof v === 'string') {
-    var s = v.trim();
-    return s ? s.slice(0, 10) : null;
-  }
-  var d = v instanceof Date ? v : new Date(v);
-  if (isNaN(d.getTime())) return null;
+  if (typeof v === 'string') return v.trim().slice(0, 10);
+  if (!(v instanceof Date) || isNaN(v.getTime())) return null;
   var partes = new Intl.DateTimeFormat('en-CA', {
     timeZone: ZONA_HORARIA, year: 'numeric', month: '2-digit', day: '2-digit'
-  }).formatToParts(d);
+  }).formatToParts(v);
   var o = {};
   partes.forEach(function (p) { o[p.type] = p.value; });
   return o.year + '-' + o.month + '-' + o.day;
@@ -98,7 +99,10 @@ function numeroOnull(v) {
 }
 
 function esFechaIso(s) {
-  return typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
+  if (typeof s !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+  var p = s.split('-').map(Number);
+  var d = new Date(Date.UTC(p[0], p[1] - 1, p[2]));
+  return d.getUTCFullYear() === p[0] && d.getUTCMonth() === p[1] - 1 && d.getUTCDate() === p[2];
 }
 
 function publicar(registros, publicas) {
@@ -125,89 +129,106 @@ function publicar(registros, publicas) {
 var OBLIGATORIO = 'Este campo es obligatorio.';
 var RE_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 var RE_URL = /^https?:\/\//;
+var MAX_TEXTO = 2000;
+var MAX_DESCRIPCION = 280;
 
-function vacio(v) {
-  if (Array.isArray(v)) return v.map(function (x) { return String(x).trim(); }).filter(Boolean).length === 0;
-  return v === null || v === undefined || String(v).trim() === '';
+function ausente(v) {
+  return v === null || v === undefined || (typeof v === 'string' && v.trim() === '');
 }
 
 function validarEnvio(tipo, d, listas, idsAprobados) {
   var e = {};
-  d = d || {};
+  d = (d && typeof d === 'object' && !Array.isArray(d)) ? d : {};
   listas = listas || {};
 
-  function obligatorio(campo) {
-    if (vacio(d[campo])) { e[campo] = OBLIGATORIO; return false; }
-    return true;
+  // Texto escalar: debe ser string. Devuelve el string recortado, o null si falta o es inválido (ya anotó el error).
+  function texto(campo, requerido, max) {
+    var v = d[campo];
+    if (ausente(v)) { if (requerido) e[campo] = OBLIGATORIO; return null; }
+    if (typeof v !== 'string') { e[campo] = 'Revisa este campo.'; return null; }
+    var s = v.trim();
+    var tope = max || MAX_TEXTO;
+    if (s.length > tope) { e[campo] = 'Máximo ' + tope + ' caracteres.'; return null; }
+    return s;
   }
-  function enLista(campo, lista) {
-    var valores = Array.isArray(d[campo]) ? d[campo] : [d[campo]];
+  function opcionUnica(campo, lista, requerido) {
+    var v = d[campo];
+    if (ausente(v)) { if (requerido) e[campo] = OBLIGATORIO; return; }
+    if (typeof v !== 'string' || (lista || []).indexOf(v.trim()) === -1) e[campo] = 'Elige una opción de la lista.';
+  }
+  function opcionMultiple(campo, lista, requerido) {
+    var v = d[campo];
+    if (ausente(v) || (Array.isArray(v) && v.length === 0)) { if (requerido) e[campo] = OBLIGATORIO; return; }
     var validos = lista || [];
-    var ok = valores.every(function (x) { return validos.indexOf(String(x).trim()) !== -1; });
+    var ok = Array.isArray(v) && v.every(function (x) { return typeof x === 'string' && validos.indexOf(x.trim()) !== -1; });
     if (!ok) e[campo] = 'Elige una opción de la lista.';
   }
-  function listaObligatoria(campo, lista) {
-    if (obligatorio(campo)) enLista(campo, lista);
+  function correoCampo(campo, requerido) {
+    var s = texto(campo, requerido);
+    if (s !== null && !RE_CORREO.test(s)) e[campo] = 'Revisa el correo.';
   }
-  function listaOpcional(campo, lista) {
-    if (!vacio(d[campo])) enLista(campo, lista);
+  function urlCampo(campo, requerido) {
+    var s = texto(campo, requerido);
+    if (s !== null && !RE_URL.test(s)) e[campo] = 'El enlace debe empezar con http:// o https://.';
   }
-  function correoObligatorio(campo) {
-    if (obligatorio(campo) && !RE_CORREO.test(String(d[campo]).trim())) e[campo] = 'Revisa el correo.';
+  function fechaCampo(campo, requerido) {
+    var s = texto(campo, requerido);
+    if (s !== null && !esFechaIso(s)) e[campo] = 'Usa el formato AAAA-MM-DD.';
   }
-  function correoOpcional(campo) {
-    if (!vacio(d[campo]) && !RE_CORREO.test(String(d[campo]).trim())) e[campo] = 'Revisa el correo.';
-  }
-  function urlObligatoria(campo) {
-    if (obligatorio(campo) && !RE_URL.test(String(d[campo]).trim())) e[campo] = 'El enlace debe empezar con http:// o https://.';
-  }
-  function urlOpcional(campo) {
-    if (!vacio(d[campo]) && !RE_URL.test(String(d[campo]).trim())) e[campo] = 'El enlace debe empezar con http:// o https://.';
-  }
-  function descripcion(campo, requerida) {
-    if (requerida) { if (!obligatorio(campo)) return; }
-    else if (vacio(d[campo])) return;
-    if (String(d[campo]).trim().length > 280) e[campo] = 'Máximo 280 caracteres.';
+  function anioCampo(campo) {
+    var v = d[campo];
+    if (ausente(v)) { e[campo] = OBLIGATORIO; return; }
+    var ok = (typeof v === 'number' || (typeof v === 'string' && /^\d{4}$/.test(v.trim()))) &&
+      Number.isInteger(Number(v)) && Number(v) >= 2000 && Number(v) <= 2100;
+    if (!ok) e[campo] = 'Revisa el año.';
   }
   function consentimiento() {
     if (d.consentimiento !== true) e.consentimiento = 'Necesitamos tu consentimiento para guardar tu correo.';
   }
 
   if (tipo === 'agente') {
-    obligatorio('nombre');
-    listaObligatoria('ofrece', listas.ofrece);
-    listaObligatoria('sectores', listas.sectores);
-    listaObligatoria('tipo_entidad', listas.tiposEntidad);
-    listaObligatoria('presencia', listas.presencia);
+    texto('nombre', true);
+    opcionMultiple('ofrece', listas.ofrece, true);
+    opcionMultiple('sectores', listas.sectores, true);
+    opcionUnica('tipo_entidad', listas.tiposEntidad, true);
+    opcionUnica('presencia', listas.presencia, true);
     // Las entidades internacionales no tienen departamento del Perú.
-    if (String(d.presencia || '').indexOf('Internacional') === 0) listaOpcional('departamento', listas.departamentos);
-    else listaObligatoria('departamento', listas.departamentos);
-    obligatorio('ciudad');
-    descripcion('descripcion', true);
-    urlOpcional('web'); urlOpcional('instagram'); urlOpcional('facebook'); urlOpcional('logo_url');
-    correoOpcional('email_publico');
-    obligatorio('nombre_proponente');
-    correoObligatorio('email_proponente');
+    var internacional = typeof d.presencia === 'string' && d.presencia.indexOf('Internacional') === 0;
+    opcionUnica('departamento', listas.departamentos, !internacional);
+    texto('ciudad', true);
+    texto('pais', false);
+    texto('direccion', false);
+    texto('otras_redes', false);
+    texto('descripcion', true, MAX_DESCRIPCION);
+    urlCampo('web', false); urlCampo('instagram', false); urlCampo('facebook', false); urlCampo('logo_url', false);
+    correoCampo('email_publico', false);
+    texto('nombre_proponente', true);
+    correoCampo('email_proponente', true);
     consentimiento();
   } else if (tipo === 'convocatoria') {
-    if (obligatorio('agente_id') && !(idsAprobados && idsAprobados.has(String(d.agente_id).trim()))) e.agente_id = 'Elige un agente publicado.';
-    obligatorio('titulo');
-    obligatorio('anio');
-    listaObligatoria('tipo', listas.tiposConvocatoria);
-    listaOpcional('ofrece', listas.ofrece);
-    listaOpcional('sectores', listas.sectores);
-    descripcion('descripcion', false);
-    urlObligatoria('enlace_bases');
-    obligatorio('fecha_cierre');
-    obligatorio('nombre_proponente');
-    correoObligatorio('email_proponente');
+    var ag = texto('agente_id', true);
+    if (ag !== null && !(idsAprobados && idsAprobados.has(ag))) e.agente_id = 'Elige un agente publicado.';
+    texto('titulo', true);
+    anioCampo('anio');
+    opcionUnica('tipo', listas.tiposConvocatoria, true);
+    opcionMultiple('ofrece', listas.ofrece, false);
+    opcionMultiple('sectores', listas.sectores, false);
+    texto('descripcion', false, MAX_DESCRIPCION);
+    texto('monto', false);
+    urlCampo('enlace_bases', true);
+    fechaCampo('fecha_apertura', false);
+    fechaCampo('fecha_cierre', true);
+    fechaCampo('fecha_resultados', false);
+    texto('nombre_proponente', true);
+    correoCampo('email_proponente', true);
     consentimiento();
   } else if (tipo === 'sugerencia') {
-    obligatorio('tipo_registro');
-    obligatorio('registro_id');
-    obligatorio('campo');
-    obligatorio('valor_propuesto');
-    correoObligatorio('email_proponente');
+    opcionUnica('tipo_registro', ['agente', 'convocatoria'], true);
+    texto('registro_id', true);
+    texto('campo', true);
+    texto('valor_propuesto', true);
+    texto('fuente', false);
+    correoCampo('email_proponente', true);
     consentimiento();
   } else {
     e.tipo = 'Elige una opción de la lista.';
@@ -217,9 +238,10 @@ function validarEnvio(tipo, d, listas, idsAprobados) {
 
 function esSpam(d, ahoraMs) {
   d = d || {};
-  if (!vacio(d.sitio_web_2)) return true;
-  var t0 = Number(d.t0);
+  if (!ausente(d.sitio_web_2)) return true;
   // Sin marca de tiempo válida no se puede comprobar el tiempo de llenado: se descarta.
+  if (d.t0 === null || d.t0 === undefined || d.t0 === '') return true;
+  var t0 = Number(d.t0);
   if (!isFinite(t0)) return true;
   return ahoraMs - t0 < TIEMPO_MINIMO_MS;
 }
