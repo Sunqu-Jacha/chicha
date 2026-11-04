@@ -72,16 +72,11 @@ Hazlo en una **hoja de ensayo** (no la real), con la cuenta sunqujacha@gmail.com
 
 ## Publicar en GitHub Pages
 
-1. El trabajo vive en la rama `feat/chicha-v1`. Antes de publicar, intégralo en `main`:
-   ```
-   git switch main
-   git merge feat/chicha-v1
-   ```
-   Todo lo que publiques después (incluida la URL del script en `config.js`) debe estar commiteado en `main`.
-2. Crea la organización **sunqujacha** en GitHub (o usa una existente) y, dentro, un repositorio público llamado **chicha**.
+1. Todo lo que publiques (incluida la URL del script en `config.js`) debe estar commiteado en `main`.
+2. La organización **Sunqu-Jacha** en GitHub ya tiene el repositorio **chicha**. Debe ser público para usar GitHub Pages en el plan gratuito.
 3. Conecta este repositorio y sube la rama principal:
    ```
-   git remote add origin https://github.com/sunqujacha/chicha.git
+   git remote add origin https://github.com/Sunqu-Jacha/chicha.git
    git push -u origin main
    ```
 4. En el repositorio: **Settings › Pages › Build and deployment**: fuente **Deploy from a branch**, rama `main`, carpeta `/ (root)`.
@@ -91,7 +86,7 @@ Hazlo en una **hoja de ensayo** (no la real), con la cuenta sunqujacha@gmail.com
    git commit -m "config: URL del script"
    git push
    ```
-6. El sitio queda en `https://sunqujacha.github.io/chicha/`. Esa URL ya está en `index.html` (`og:url`, `og:image`, canonical), `sitemap.xml` y `robots.txt`; si cambia, actualízala en los tres.
+6. El sitio queda en `https://sunqu-jacha.github.io/chicha/`. Esa URL ya está en `index.html` (`og:url`, `og:image`, canonical), `sitemap.xml`, `robots.txt` y `apps-script/Code.gs` (`URL_SITIO`, usada en los correos); si cambia, actualízala en los cuatro.
 
 ## Actualizar después
 

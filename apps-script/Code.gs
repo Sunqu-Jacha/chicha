@@ -4,7 +4,7 @@
  */
 
 var MODERADOR = 'sunqujacha@gmail.com';
-var URL_SITIO = 'https://sunqujacha.github.io/chicha/';
+var URL_SITIO = 'https://sunqu-jacha.github.io/chicha/';
 
 var CLAVE_CACHE = 'datos';
 var SEGUNDOS_CACHE = 600;
