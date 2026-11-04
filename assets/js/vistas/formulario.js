@@ -301,8 +301,8 @@ function sincronizar(form) {
     const intl = esInternacional(pres.value);
     const dep = form.querySelector('[data-campo="departamento"]');
     const pais = form.querySelector('[data-campo="pais"]');
-    if (dep) { dep.hidden = intl; limpiarError(dep); }
-    if (pais) { pais.hidden = !intl; limpiarError(pais); }
+    if (dep && dep.hidden !== intl) { dep.hidden = intl; limpiarError(dep); }
+    if (pais && pais.hidden === intl) { pais.hidden = !intl; limpiarError(pais); }
   }
   const desc = form.elements.descripcion;
   const cuenta = form.querySelector('[data-cuenta="descripcion"]');
@@ -452,11 +452,14 @@ export function abrirFormulario({ modo = 'elegir', datos, registroId = '' } = {}
   dlg.addEventListener('change', (e) => { const f = e.target.closest('form'); if (f) { sincronizar(f); guardar(); } });
   dlg.addEventListener('submit', (e) => { e.preventDefault(); const f = e.target.closest('form'); if (f) enviar(f); });
   dlg.addEventListener('click', (e) => {
-    if (e.target.closest('[data-cerrar-form]')) { dlg.close(); return; }
+    if (e.target.closest('[data-cerrar-form]')) { if (!estado.enviando) dlg.close(); return; }
     const m = e.target.closest('[data-modo]');
     if (m && !estado.enviando) pintar(m.dataset.modo);
   });
+  // Mientras se envía no se puede cerrar: así siempre se ve el resultado y no se burla la guarda de doble envío.
+  dlg.addEventListener('cancel', (e) => { if (estado.enviando) e.preventDefault(); });
   dlg.addEventListener('close', () => {
+    if (estado.enviando) { dlg.showModal(); return; }
     dlg.remove();
     const destino = opener && opener.isConnected ? opener : document.getElementById('vista');
     if (destino) destino.focus();

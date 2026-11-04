@@ -109,7 +109,10 @@ test('htmlFormulario elegir: dos opciones', () => {
 test('htmlFormulario agente: etiquetas visibles, trampa, contador, multivalores como casillas', () => {
   const h = htmlFormulario('agente', ejemplo);
   assert.ok(h.includes('<label for="f-nombre"'));
-  assert.ok(h.includes('name="sitio_web_2"') && h.includes('tabindex="-1"') && h.includes('autocomplete="off"'));
+  const trampa = h.match(/<input[^>]*name="sitio_web_2"[^>]*>/);
+  assert.ok(trampa, 'input trampa');
+  assert.ok(trampa[0].includes('tabindex="-1"') && trampa[0].includes('autocomplete="off"'));
+  assert.ok(h.includes('class="trampa" aria-hidden="true"'));
   assert.ok(h.includes('0/280'));
   assert.ok(h.includes('type="checkbox" name="ofrece"') && h.includes('type="checkbox" name="sectores"'));
   assert.ok(h.includes('name="consentimiento"'));
@@ -117,7 +120,10 @@ test('htmlFormulario agente: etiquetas visibles, trampa, contador, multivalores 
   assert.ok(h.includes('data-campo="pais" hidden'));
   for (const n of ['nombre', 'tipo_entidad', 'presencia', 'departamento', 'ciudad', 'descripcion', 'nombre_proponente', 'email_proponente']) {
     assert.ok(h.includes(`id="err-${n}"`), n);
-    assert.ok(h.includes(`aria-describedby="`), n);
+    const ctl = h.match(new RegExp(`<(?:input|select|textarea|fieldset)[^>]*(?:id="f-${n}"|name="${n}")[^>]*>`));
+    assert.ok(ctl, `control ${n}`);
+    const desc = ctl[0].match(/aria-describedby="([^"]*)"/);
+    assert.ok(desc && desc[1].split(' ').includes(`err-${n}`), n);
   }
 });
 

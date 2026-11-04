@@ -17,7 +17,7 @@ const ESCRITORIO = '(min-width: 768px)';
 
 const estado = {
   datos: null, origen: null, cargando: false, vistaPintada: null, pintadoAntes: false, htmlPintado: null,
-  rutaFondo: null, fondoReal: false, // fondoReal: el usuario llegó navegando a la vista que hay bajo la ficha
+  pendienteForm: null, rutaFondo: null, fondoReal: false, // fondoReal: el usuario llegó navegando a la vista que hay bajo la ficha
   fichaDesdeApp: false, htmlFicha: null, origenFicha: null, idFicha: null,
 };
 let $vista;
@@ -226,8 +226,38 @@ function buscar(form) {
   location.hash = escribirRuta({ ...r, vista: destino, criterios, orden: r.vista === destino ? r.orden : 'az' });
 }
 
+function zonaForm(id, rol) {
+  let z = document.getElementById(id);
+  if (!z) {
+    z = document.createElement('div');
+    z.id = id;
+    z.setAttribute('role', rol);
+    $vista.parentNode.insertBefore(z, $vista);
+  }
+  return z;
+}
+
+function avisarForm(estadoTxt, errorHtml) {
+  zonaForm('aviso-form', 'status').innerHTML = estadoTxt ? `<p class="aviso">${estadoTxt}</p>` : '';
+  zonaForm('error-form', 'alert').innerHTML = errorHtml ? `<div class="error-carga">${errorHtml}</div>` : '';
+}
+
+// Abre el formulario ya, o lo deja pendiente hasta que lleguen los datos.
+function pedirFormulario(detalle) {
+  if (estado.datos) {
+    estado.pendienteForm = null;
+    avisarForm('', '');
+    abrirFormulario({ modo: detalle.modo || 'elegir', registroId: detalle.registroId || '', datos: estado.datos });
+    return;
+  }
+  estado.pendienteForm = detalle;
+  if (estado.cargando) avisarForm('Cargando el mapa para abrir el formulario…', '');
+  else avisarForm('', '<p>No podemos abrir el formulario en este momento: el mapa no se pudo cargar.</p><button type="button" class="btn btn--primario" data-reintentar-form>Reintentar</button>');
+}
+
 async function cargar({ enfocar = false } = {}) {
   estado.cargando = true;
+  if (estado.pendienteForm) avisarForm('Cargando el mapa para abrir el formulario…', '');
   if (!estado.datos) $vista.innerHTML = '<p class="vista__espera">Cargando el mapa…</p>';
   const { datos, origen } = await cargarDatos({
     url: URL_DATOS,
@@ -244,6 +274,7 @@ async function cargar({ enfocar = false } = {}) {
     const destino = estado.datos ? $vista : $vista.querySelector('[data-reintentar]');
     if (destino) destino.focus({ preventScroll: true });
   }
+  if (estado.pendienteForm) pedirFormulario(estado.pendienteForm);
 }
 
 export function iniciar() {
@@ -284,9 +315,10 @@ export function iniciar() {
     if (sugerir) document.dispatchEvent(new CustomEvent('chicha:anadir', { detail: { modo: 'sugerencia', registroId: sugerir.dataset.registro } }));
   });
   document.addEventListener('chicha:anadir', (e) => {
-    if (!estado.datos) return;
-    const { modo = 'elegir', registroId = '' } = e.detail || {};
-    abrirFormulario({ modo, registroId, datos: estado.datos });
+    pedirFormulario(e.detail || {});
+  });
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('[data-reintentar-form]')) cargar();
   });
   const btnAnadir = document.getElementById('btn-anadir');
   if (btnAnadir) btnAnadir.addEventListener('click', anadir);

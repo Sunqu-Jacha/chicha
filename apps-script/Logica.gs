@@ -250,7 +250,9 @@ function esSpam(d, ahoraMs) {
   if (d.t0 === null || d.t0 === undefined || d.t0 === '') return true;
   var t0 = Number(d.t0);
   if (!isFinite(t0)) return true;
-  return ahoraMs - t0 < TIEMPO_MINIMO_MS;
+  // Reloj del cliente adelantado (transcurrido negativo): no es spam. Solo 0 <= transcurrido < mínimo lo es.
+  var transcurrido = ahoraMs - t0;
+  return transcurrido >= 0 && transcurrido < TIEMPO_MINIMO_MS;
 }
 
 function nuevoId(prefijo, aleatorio) {

@@ -263,3 +263,13 @@ test('R11: esInternacional compara exacto con la etiqueta corta', () => {
   assert.equal(gs.esInternacional(undefined), false);
   assert.equal(gs.esInternacional(['Internacional']), false);
 });
+
+test('esSpam (R15): transcurrido negativo no es spam; solo 0 <= t < 4000 ms lo es', () => {
+  assert.equal(gs.esSpam({ t0: 20000 }, 10000), false); // reloj del cliente adelantado
+  assert.equal(gs.esSpam({ t0: 10000 }, 10000), true);
+  assert.equal(gs.esSpam({ t0: 10000 }, 13999), true);
+  assert.equal(gs.esSpam({ t0: 10000 }, 14000), false);
+  assert.equal(gs.esSpam({ t0: 20000, sitio_web_2: 'x' }, 10000), true);
+  assert.equal(gs.esSpam({ t0: 'abc' }, 10000), true);
+  assert.equal(gs.esSpam({}, 10000), true);
+});
