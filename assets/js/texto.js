@@ -18,3 +18,20 @@ export function separarMulti(v) {
   const partes = Array.isArray(v) ? v : String(v).split(';');
   return partes.map((p) => String(p).trim()).filter(Boolean);
 }
+
+const CORREO = /^[^\s@<>"'()\:;,/?&=#]+@[^\s@<>"'()\:;,/?&=#]+\.[^\s@<>"'()\:;,/?&=#]+$/;
+
+// Lista blanca de esquemas para todo href/src venido de la hoja: http(s) y, solo si se pide, mailto.
+export function urlSegura(u, { mailto = false } = {}) {
+  if (typeof u !== 'string') return null;
+  const texto = u.trim();
+  if (!texto) return null;
+  if (mailto) {
+    const correo = texto.replace(/^mailto:/i, '');
+    if (CORREO.test(correo)) return `mailto:${correo}`;
+  }
+  try {
+    const url = new URL(texto);
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : null;
+  } catch { return null; }
+}

@@ -15,7 +15,7 @@ const VISIBLES = 6;
 // "Internacional" (sin sede en el Perú) solo existe en la capa Internacional (spec §3).
 const PRESENCIA_SOLO_INTL = 'internacional';
 
-const plural = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
+export const plural = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
 
 function gruposDe(capa) {
   return GRUPOS.filter((g) => capa === 'Perú' || !g.soloPeru);
@@ -39,7 +39,7 @@ function opcion(g, valor, n, marcado) {
     + `<span class="opcion__t">${esc(valor)}</span><span class="opcion__n">${n}</span></label>`;
 }
 
-function grupoFiltro(g, valores, cuenta, sel) {
+export function grupoFiltro(g, valores, cuenta, sel) {
   const items = valores.map((v) => ({ v, html: opcion(g, v, cuenta.get(slug(v)) || 0, sel.includes(slug(v))) }));
   const primeros = items.slice(0, VISIBLES).map((x) => x.html).join('');
   const resto = items.slice(VISIBLES);
@@ -53,11 +53,21 @@ function grupoFiltro(g, valores, cuenta, sel) {
   return `<fieldset class="filtros__grupo"><legend>${esc(g.titulo)}</legend>${primeros}${mas}</fieldset>`;
 }
 
+// Hoja inferior (móvil): app.js mueve aquí el formulario [data-filtros] al abrirla.
+export function hojaFiltros(n) {
+  return `<dialog class="hoja" id="hoja-filtros" aria-labelledby="hoja-titulo">
+    <div class="hoja__cabeza"><h2 id="hoja-titulo">Filtros</h2><button type="button" class="btn" data-cerrar-filtros>Cerrar</button></div>
+    <div class="hoja__cuerpo" data-hueco-filtros></div>
+    <div class="hoja__pie"><button type="button" class="btn btn--primario" data-cerrar-filtros data-zona="ver-resultados">Ver ${plural(n, 'resultado', 'resultados')}</button></div>
+  </dialog>`;
+}
+
 export function renderExplorar(datos, ruta, capa) {
   const vista = capa === 'Internacional' ? 'internacional' : 'explorar';
   const grupos = gruposDe(capa);
   const c = { ...criteriosVacios(), ...ruta.criterios };
   if (capa !== 'Perú') { c.departamentos = []; c.presencia = []; }
+  else c.presencia = c.presencia.filter((s) => s !== PRESENCIA_SOLO_INTL);
   const href = (crit) => escribirRuta({ ...ruta, vista, criterios: crit });
 
   const base = datos.agentes.filter((a) => (a.capa || 'Perú') === capa);
@@ -128,10 +138,6 @@ export function renderExplorar(datos, ruta, capa) {
       <div data-zona="resultados">${zonaResultados}</div>
     </div>
   </div>
-  <dialog class="hoja" id="hoja-filtros" aria-labelledby="hoja-titulo">
-    <div class="hoja__cabeza"><h2 id="hoja-titulo">Filtros</h2><button type="button" class="btn" data-cerrar-filtros>Cerrar</button></div>
-    <div class="hoja__cuerpo" data-hueco-filtros></div>
-    <div class="hoja__pie"><button type="button" class="btn btn--primario" data-cerrar-filtros data-zona="ver-resultados">Ver ${plural(resultados.length, 'resultado', 'resultados')}</button></div>
-  </dialog>
+  ${hojaFiltros(resultados.length)}
 </section>`;
 }

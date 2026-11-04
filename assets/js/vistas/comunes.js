@@ -1,4 +1,5 @@
 import { esc, slug, separarMulti } from '../texto.js';
+import { estadoConvocatoria, MESES } from '../convocatorias.js';
 import { icono, ICONO_POR_SLUG } from '../iconos.js';
 
 // Ícono decorativo para un valor de taxonomía ('' si no tiene).
@@ -32,4 +33,42 @@ export function chip(texto, { activo = false, quitarHref = null, href = null, ic
   }
   if (href) return `<a class="${clase}" href="${esc(href)}">${iconoHtml}<span>${esc(texto)}</span></a>`;
   return `<span class="${clase}">${iconoHtml}<span>${esc(texto)}</span></span>`;
+}
+
+export function mayusculaInicial(s) {
+  const t = String(s ?? '');
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
+
+// La url debe venir ya validada con urlSegura.
+export function enlaceExterno(url, contenidoHtml, clase = '') {
+  return `<a${clase ? ` class="${clase}"` : ''} href="${esc(url)}" target="_blank" rel="noopener">${contenidoHtml}`
+    + '<span class="solo-lector"> (se abre en una pestaña nueva)</span></a>';
+}
+
+function textoEstado({ estado, diasParaCierre: n }) {
+  if (estado === 'proxima') return 'Próxima';
+  if (estado === 'cerrada') return 'Cerrada';
+  if (n === null) return 'Abierta';
+  if (n === 0) return 'Abierta · cierra hoy';
+  return `Abierta · cierra en ${n === 1 ? '1 día' : `${n} días`}`;
+}
+
+export function insigniaEstado(c, hoy) {
+  const e = estadoConvocatoria(c, hoy);
+  const urgente = e.estado === 'abierta' && e.diasParaCierre !== null;
+  return `<span class="insignia insignia--${e.estado}${urgente ? ' insignia--urgente' : ''}">${esc(textoEstado(e))}</span>`;
+}
+
+// Fecha que importa según el estado: la apertura si está próxima; si no, el cierre.
+export function fechaClave(c, hoy) {
+  const { estado } = estadoConvocatoria(c, hoy);
+  if (estado === 'proxima') return { etiqueta: 'Abre', fecha: c.fechaApertura };
+  return { etiqueta: estado === 'cerrada' ? 'Cerró' : 'Cierra', fecha: c.fechaCierre };
+}
+
+export function partesFecha(iso) {
+  const [, m, d] = String(iso).split('-').map(Number);
+  const mes = MESES[m - 1] || '';
+  return { dia: d, mes: mes.toLowerCase() };
 }

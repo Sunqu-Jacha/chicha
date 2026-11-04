@@ -5,6 +5,10 @@ import { renderPortada } from '../assets/js/vistas/portada.js';
 import { renderExplorar } from '../assets/js/vistas/explorar.js';
 import { leerRuta } from '../assets/js/rutas.js';
 import { esDatosValidos } from '../assets/js/datos.js';
+import { renderFicha } from '../assets/js/vistas/ficha.js';
+import { renderConvocatorias } from '../assets/js/vistas/convocatorias.js';
+import { renderSobre } from '../assets/js/vistas/sobre.js';
+import { validos } from '../assets/js/app.js';
 
 const ejemplo = JSON.parse(readFileSync(new URL('../assets/datos-ejemplo.json', import.meta.url), 'utf8'));
 
@@ -98,4 +102,124 @@ test('Quitar el último filtro enlaza a la ruta sin el último valor', () => {
   const datos = { ...ejemplo, agentes: [] };
   const html = renderExplorar(datos, leerRuta('#/explorar?ofrece=formacion&sec=musica'), 'Perú');
   assert.ok(html.includes('href="#/explorar?ofrece=formacion"'));
+});
+
+const conv = (extra = {}) => ({
+  id: 'cv-1', agenteId: 'ag-1', titulo: 'Fondo de prueba', anio: 2026, tipo: 'fondo', ofrece: ['Financiamiento y fondos'], sectores: ['Música'],
+  descripcion: '', monto: '', enlaceBases: 'https://example.org/bases', fechaApertura: '2026-10-01', fechaCierre: '2026-11-13', fechaResultados: null, ...extra,
+});
+
+test('renderFicha(null) avisa que el agente no está disponible (Review Focus 5)', () => {
+  const html = renderFicha(null, [], '2026-11-04');
+  assert.ok(html.includes('Este agente ya no está disponible'));
+  assert.ok(html.includes('href="#/explorar"'));
+  assert.ok(html.includes('Volver a explorar'));
+  assert.match(html, /^<dialog /);
+});
+
+test('renderFicha: enlaces externos con rel="noopener" y target="_blank", correo con mailto', () => {
+  const a = agente({ web: 'https://example.org', instagram: 'https://instagram.com/casa', facebook: 'https://facebook.com/casa',
+    otrasRedes: 'https://tiktok.com/@casa', emailPublico: 'hola@example.org' });
+  const html = renderFicha(a, [], '2026-11-04');
+  const externos = html.match(/<a [^>]*href="https?:[^>]*>/g) || [];
+  assert.equal(externos.length, 4);
+  for (const e of externos) { assert.ok(e.includes('rel="noopener"'), e); assert.ok(e.includes('target="_blank"'), e); }
+  assert.ok(html.includes('href="mailto:hola@example.org"'));
+  assert.ok(html.includes('Sugerir un cambio'));
+  assert.ok(html.includes('data-registro="ag-1"'));
+});
+
+test('renderFicha no enlaza URLs con esquemas peligrosos y escapa los datos', () => {
+  const a = agente({ nombre: '<b>X</b>', web: 'javascript:alert(1)', instagram: ' JavaScript:alert(1)', facebook: 'data:text/html,x',
+    otrasRedes: 'vbscript:x', emailPublico: 'javascript:alert(1)', logoUrl: 'javascript:alert(1)' });
+  const html = renderFicha(a, [], '2026-11-04');
+  assert.ok(!/javascript:|vbscript:|data:/i.test(html));
+  assert.ok(!html.includes('<img'));
+  assert.ok(!html.includes('<b>'));
+  assert.ok(html.includes('&lt;b&gt;'));
+});
+
+test('renderFicha: logo seguro o iniciales', () => {
+  assert.ok(renderFicha(agente({ logoUrl: 'https://example.org/logo.png' }), [], '2026-11-04').includes('<img src="https://example.org/logo.png"'));
+  assert.ok(renderFicha(agente({ nombre: 'Casa de la Música' }), [], '2026-11-04').includes('>CM<'));
+});
+
+test('renderFicha muestra solo las convocatorias del agente en el año en curso, con su estado', () => {
+  const cs = [conv({ titulo: 'Fondo vigente' }), conv({ id: 'cv-2', titulo: 'Fondo viejo', anio: 2025, fechaCierre: '2025-05-01' }),
+    conv({ id: 'cv-3', agenteId: 'otro', titulo: 'Fondo ajeno' })];
+  const html = renderFicha(agente(), cs, '2026-11-04');
+  assert.ok(html.includes('Fondo vigente'));
+  assert.ok(html.includes('cierra en 9 días'));
+  assert.ok(!html.includes('Fondo viejo'));
+  assert.ok(!html.includes('Fondo ajeno'));
+});
+
+const datosConv = (convocatorias, agentes = [agente()]) => ({ ...ejemplo, agentes, convocatorias });
+
+test('renderConvocatorias: título con año, insignia "cierra en 9 días" y enlace a bases', () => {
+  const html = renderConvocatorias(datosConv([conv()]), leerRuta('#/convocatorias'), '2026-11-04');
+  assert.ok(html.includes('CONVOCATORIAS 2026'));
+  assert.ok(html.includes('Abierta · cierra en 9 días'));
+  assert.ok(html.includes('Noviembre'));
+  assert.ok(html.includes('href="#/agente/ag-1"'));
+  assert.match(html, /<a [^>]*href="https:\/\/example\.org\/bases"[^>]*rel="noopener"/);
+  assert.ok(html.includes('Ver bases'));
+});
+
+test('renderConvocatorias: textos de insignia exactos', () => {
+  const html = (hoy, extra = {}) => renderConvocatorias(datosConv([conv(extra)]), leerRuta('#/convocatorias'), hoy);
+  assert.ok(html('2026-11-12').includes('Abierta · cierra en 1 día<'));
+  assert.ok(html('2026-11-13').includes('Abierta · cierra hoy<'));
+  assert.ok(html('2026-10-15').includes('>Abierta<'));
+  assert.ok(html('2026-09-15').includes('>Próxima<'));
+  assert.ok(html('2026-11-20').includes('>Cerrada<'));
+});
+
+test('renderConvocatorias: fecha grande de cierre, o de apertura si está próxima', () => {
+  const html = (hoy) => renderConvocatorias(datosConv([conv()]), leerRuta('#/convocatorias'), hoy);
+  assert.ok(html('2026-11-04').includes('datetime="2026-11-13"'));
+  assert.ok(html('2026-09-15').includes('datetime="2026-10-01"'));
+});
+
+test('renderConvocatorias: estado vacío, año elegido y filtros desde la ruta', () => {
+  const ag = [agente(), agente({ id: 'ag-i', capa: 'Internacional', nombre: 'Red Global' })];
+  const cs = [conv(), conv({ id: 'cv-i', agenteId: 'ag-i', titulo: 'Beca global', tipo: 'beca' }),
+    conv({ id: 'cv-27', titulo: 'Fondo futuro', anio: 2027, fechaApertura: '2027-01-01', fechaCierre: '2027-02-01' })];
+  const d = datosConv(cs, ag);
+  const vacio = renderConvocatorias(d, leerRuta('#/convocatorias?tipo=premio'), '2026-11-04');
+  assert.ok(vacio.includes('No hay convocatorias con estos filtros este año'));
+  const sinIntl = renderConvocatorias(d, leerRuta('#/convocatorias?intl=0'), '2026-11-04');
+  assert.ok(sinIntl.includes('Fondo de prueba') && !sinIntl.includes('Beca global'));
+  const conIntl = renderConvocatorias(d, leerRuta('#/convocatorias'), '2026-11-04');
+  assert.ok(conIntl.includes('Beca global') && conIntl.includes('>Internacional<'));
+  const beca = renderConvocatorias(d, leerRuta('#/convocatorias?tipo=beca'), '2026-11-04');
+  assert.ok(beca.includes('Beca global') && !beca.includes('Fondo de prueba'));
+  const a2027 = renderConvocatorias(d, leerRuta('#/convocatorias?anio=2027'), '2026-11-04');
+  assert.ok(a2027.includes('CONVOCATORIAS 2027') && a2027.includes('Fondo futuro') && !a2027.includes('Fondo de prueba'));
+  assert.ok(a2027.includes('<option value="2027" selected>'));
+  const abiertas = renderConvocatorias(d, leerRuta('#/convocatorias?anio=2027&abiertas=1'), '2026-11-04');
+  assert.ok(abiertas.includes('No hay convocatorias con estos filtros este año'));
+  for (const t of ['Solo abiertas', 'Incluir internacionales', '<legend>Sector</legend>', '<legend>¿Qué ofrece?</legend>', '<legend>Tipo</legend>']) assert.ok(conIntl.includes(t), t);
+});
+
+test('renderConvocatorias no enlaza bases con esquemas peligrosos', () => {
+  const html = renderConvocatorias(datosConv([conv({ enlaceBases: 'javascript:alert(1)' })]), leerRuta('#/convocatorias'), '2026-11-04');
+  assert.ok(!html.includes('javascript:'));
+  assert.ok(!html.includes('Ver bases'));
+});
+
+test('renderSobre: lema, Sunqu Jach\'a, moderación y aviso de privacidad', () => {
+  const html = renderSobre();
+  for (const t of ['SOBRE CHICHA', 'Juntos, construimos el Perú', "Sunqu Jach'a", 'Ley N.º 29733', 'Sugerir un cambio']) assert.ok(html.includes(t), t);
+});
+
+test('renderExplorar en capa Perú ignora pres=internacional', () => {
+  const html = renderExplorar(ejemplo, leerRuta('#/explorar?pres=internacional'), 'Perú');
+  assert.ok(html.includes('Filtros (0)'));
+  assert.ok(!html.includes('Quitar filtro: Internacional'));
+});
+
+test('validos: en convocatorias el tipo se valida contra tiposConvocatoria', () => {
+  assert.ok(validos(ejemplo, 'convocatorias').tipos.has('beca'));
+  assert.ok(!validos(ejemplo, 'explorar').tipos.has('beca'));
 });

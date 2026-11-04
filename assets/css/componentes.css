@@ -75,7 +75,7 @@ a.chip--activo:hover { background: var(--rojo-oscuro); border-color: var(--rojo-
 
 .explorar__barra { display: flex; flex-wrap: wrap; align-items: center; gap: var(--e-3) var(--e-4); margin-bottom: var(--e-4); }
 .contador { margin: 0; font-weight: 500; }
-.contador:focus { outline: none; }
+.contador:focus { outline: 3px solid var(--negro); outline-offset: 2px; }
 .orden { display: flex; align-items: center; gap: var(--e-2); margin-left: auto; }
 .orden select {
   min-height: var(--objetivo-tactil);
@@ -163,12 +163,107 @@ a.chip--activo:hover { background: var(--rojo-oscuro); border-color: var(--rojo-
 .vacio__titulo { font-family: var(--fuente-titulo); font-size: 32px; letter-spacing: 0.06em; text-transform: uppercase; }
 .vacio__acciones { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--e-3); }
 
-/* Vistas provisionales */
-.pendiente h1 { font-size: 48px; overflow-wrap: anywhere; }
+/* Solo para lectores de pantalla */
+.solo-lector {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Insignia de estado de convocatoria */
+.insignia { display: inline-block; padding: 2px var(--e-2); font-size: 14px; font-weight: 500; }
+.insignia--abierta { background: var(--sector-educacion-claro); color: var(--sector-educacion-oscuro); }
+.insignia--proxima { background: var(--sector-editorial-y-literatura-claro); color: var(--sector-editorial-y-literatura-oscuro); }
+.insignia--cerrada { background: var(--gris-fondo); color: var(--gris-texto); }
+.insignia--urgente { background: var(--rojo); color: var(--blanco); }
+
+.etiqueta--sector { background: var(--tono-claro); color: var(--tono-oscuro); }
+
+/* Ficha: pantalla completa en móvil, panel lateral en escritorio */
+.ficha {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  max-height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: var(--blanco);
+  color: var(--negro);
+}
+.ficha::backdrop { background: rgba(20, 20, 20, 0.6); }
+.ficha__panel {
+  height: 100%;
+  padding: var(--e-4);
+  border-top: 10px solid var(--franja, var(--negro));
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+}
+.ficha__cerrar { display: flex; margin: 0 0 var(--e-4) auto; }
+.ficha__cabeza { display: flex; align-items: center; gap: var(--e-4); margin-bottom: var(--e-3); }
+.ficha__logo { flex: none; width: 72px; height: 72px; object-fit: contain; }
+.ficha__logo--iniciales {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--negro);
+  color: var(--blanco);
+  font-family: var(--fuente-titulo);
+  font-size: 32px;
+  letter-spacing: 0.06em;
+}
+.ficha__identidad { min-width: 0; }
+.ficha__nombre { margin: 0 0 var(--e-1); font-size: 36px; }
+.ficha__tipo { margin: 0; font-weight: 500; }
+.ficha__ubicacion { color: var(--gris-texto); }
+.ficha__seccion { margin-top: var(--e-5); }
+.ficha__seccion h3 { font-size: 24px; }
+.ficha__enlaces, .ficha__convs { margin: 0; padding: 0; list-style: none; }
+.ficha__enlaces a, .ficha__conv-bases a { display: inline-flex; align-items: center; min-height: var(--objetivo-tactil); font-weight: 500; }
+.ficha__conv { padding: var(--e-3) 0; border-top: 2px solid var(--gris-linea); }
+.ficha__conv p { margin: 0 0 var(--e-1); }
+.ficha__conv-titulo { font-weight: 500; }
+.ficha__conv-meta time { color: var(--gris-texto); }
+.ficha__nota { color: var(--gris-texto); }
+.ficha__sugerir { margin: var(--e-5) 0 var(--e-4); }
+
+/* Convocatorias */
+.conv-abiertas { flex: none; }
+.conv-mes { margin-bottom: var(--e-6); }
+.conv-mes h2 { padding-bottom: var(--e-2); border-bottom: 2px solid var(--negro); font-size: 32px; }
+.conv-lista { margin: 0; padding: 0; list-style: none; }
+.conv { display: flex; gap: var(--e-4); padding: var(--e-4) 0; border-bottom: 2px solid var(--gris-linea); }
+.conv__fecha { display: flex; flex: none; flex-direction: column; align-items: center; width: 72px; line-height: 1; text-align: center; }
+.conv__etiqueta { font-size: 14px; line-height: 1.5; color: var(--gris-texto); }
+.conv__dia { font-family: var(--fuente-titulo); font-size: 52px; color: var(--rojo); }
+.conv__mes { font-size: 14px; line-height: 1.5; font-weight: 500; }
+.conv__cuerpo { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.conv__titulo { margin-bottom: var(--e-1); font-size: 26px; }
+.conv__meta { margin-bottom: var(--e-2); color: var(--gris-texto); }
+.conv__meta a { display: inline-flex; align-items: center; min-height: var(--objetivo-tactil); color: var(--negro); font-weight: 500; }
+.conv__estado { display: flex; flex-wrap: wrap; align-items: center; gap: var(--e-2); margin-bottom: var(--e-1); }
+.conv__bases { margin: 0; }
+.conv__bases a { display: inline-flex; align-items: center; min-height: var(--objetivo-tactil); font-weight: 500; }
+
+/* Sobre Chicha */
+.sobre { max-width: 720px; }
+.sobre h1 { font-size: 48px; }
+.sobre h2 { margin-top: var(--e-6); font-size: 30px; }
+.sobre__lema { font-family: var(--fuente-titulo); font-size: 26px; letter-spacing: 0.06em; line-height: 1.5; }
 
 @media (min-width: 768px) {
   .explorar__cuerpo { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: var(--e-6); align-items: start; }
   .explorar__lateral { display: block; }
   .btn-filtros { display: none; }
-  .explorar h1 { font-size: 64px; }
+  .explorar h1, .sobre h1 { font-size: 64px; }
+  .ficha { left: auto; width: min(520px, 100%); border-left: 4px solid var(--negro); }
+  .ficha__panel { padding: var(--e-5); }
 }
