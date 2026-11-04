@@ -22,7 +22,12 @@ function guardarCopia(almacen, datos) {
   try { almacen.setItem(CLAVE_DATOS, JSON.stringify(datos)); } catch { /* sin espacio o bloqueado */ }
 }
 
-export async function cargarDatos({ url, fetchFn = globalThis.fetch, almacen = globalThis.localStorage, alGuardado, tiempoLimiteMs = 20000 } = {}) {
+// Con el almacenamiento bloqueado, el solo hecho de leer globalThis.localStorage lanza.
+function almacenDelNavegador() {
+  try { return globalThis.localStorage || null; } catch { return null; }
+}
+
+export async function cargarDatos({ url, fetchFn = globalThis.fetch, almacen = almacenDelNavegador(), alGuardado, tiempoLimiteMs = 20000 } = {}) {
   const copia = almacen ? leerCopia(almacen) : null;
   if (copia && alGuardado) { try { alGuardado(copia); } catch { /* el aviso no debe romper la carga */ } }
   try {

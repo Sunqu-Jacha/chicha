@@ -7,6 +7,7 @@ export const MSG_RED = 'No pudimos enviar tu propuesta. Tu texto sigue guardado;
 export const MSG_TIEMPO = MSG_RED + ' Revisa tu correo antes de reenviar: si recibiste el acuse, tu propuesta ya llegó.';
 export const MSG_SIN_SCRIPT = 'El formulario aún no está conectado.';
 export const MSG_EXITO = 'Recibimos tu propuesta. Te escribiremos cuando la revisemos.';
+const MSG_EXITO_SUGERENCIA = 'Recibimos tu sugerencia. La revisaremos y, si corresponde, aplicaremos el cambio.';
 const MSG_REGISTRO = 'No pudimos identificar qué registro quieres corregir. Cierra esta ventana y vuelve a intentarlo.';
 const MSG_REVISA = 'Revisa los campos marcados.';
 const ESPERA_MINIMA_MS = 4200; // el script descarta envíos de menos de 4 s: se espera en vez de perder la propuesta en silencio
@@ -16,15 +17,20 @@ const TITULOS = {
 };
 
 const CAMPOS_SUGERIBLES = {
-  agente: ['Nombre', 'Descripción', 'Qué ofrece', 'Sectores', 'Tipo de entidad', 'Presencia', 'Departamento', 'Ciudad', 'Dirección',
+  agente: ['Nombre', 'Descripción', 'Qué ofrece', 'Sectores', 'Tipo de entidad', 'Presencia', 'País', 'Departamento', 'Ciudad', 'Dirección',
     'Web', 'Instagram', 'Facebook', 'Otras redes', 'Correo público', 'Logo', 'Otro dato'],
   convocatoria: ['Título', 'Año', 'Tipo', 'Descripción', 'Monto', 'Enlace a las bases', 'Fecha de apertura', 'Fecha de cierre',
     'Fecha de resultados', 'Otro dato'],
 };
 
 const AVISO_CONSENTIMIENTO = "Acepto que Sunqu Jach'a guarde mi correo solo para avisarme del resultado de mi propuesta (Ley N.º 29733).";
+const AVISO_CONSENTIMIENTO_SUGERENCIA = "Acepto que Sunqu Jach'a guarde mi correo solo para confirmar que recibió mi sugerencia y consultarme sobre ella (Ley N.º 29733).";
 
 /* ---------- Lógica pura (se prueba en Node) ---------- */
+
+export function mensajeExito(modo) {
+  return modo === 'sugerencia' ? MSG_EXITO_SUGERENCIA : MSG_EXITO;
+}
 
 export function tipoDeRegistro(id) {
   const s = String(id ?? '');
@@ -169,17 +175,20 @@ function casillas({ n, e, r = false, opciones, ayuda = '' }) {
     + `</div><p class="campo__error" id="err-${n}" hidden></p></fieldset>`;
 }
 
-function consentimiento() {
+function consentimiento(aviso) {
   return envoltura('consentimiento',
-    `<label class="casilla casilla--consentimiento"><input type="checkbox" id="f-consentimiento" name="consentimiento" aria-required="true" aria-describedby="err-consentimiento"><span>${esc(AVISO_CONSENTIMIENTO)}${REQ}</span></label>`);
+    `<label class="casilla casilla--consentimiento"><input type="checkbox" id="f-consentimiento" name="consentimiento" aria-required="true" aria-describedby="err-consentimiento"><span>${esc(aviso)}${REQ}</span></label>`);
 }
 
-function tusDatos(conNombre) {
+// Las sugerencias no piden nombre ni reciben aviso de resultado: su texto no debe prometerlo.
+function tusDatos(esSugerencia) {
   return '<h3 class="form__grupo">Tus datos</h3>'
-    + '<p class="campo__ayuda">Tu correo solo se usa para avisarte del resultado.</p>'
-    + (conNombre ? entrada({ n: 'nombre_proponente', e: 'Tu nombre', r: true, extra: 'autocomplete="name"' }) : '')
+    + `<p class="campo__ayuda">${esSugerencia
+      ? 'Tu correo solo se usa para confirmarte que recibimos tu sugerencia y, si hace falta, consultarte sobre ella; no enviamos aviso del resultado.'
+      : 'Tu correo solo se usa para avisarte del resultado.'}</p>`
+    + (esSugerencia ? '' : entrada({ n: 'nombre_proponente', e: 'Tu nombre', r: true, extra: 'autocomplete="name"' }))
     + entrada({ n: 'email_proponente', e: 'Tu correo', r: true, tipo: 'email', extra: 'autocomplete="email" inputmode="email"' })
-    + consentimiento();
+    + consentimiento(esSugerencia ? AVISO_CONSENTIMIENTO_SUGERENCIA : AVISO_CONSENTIMIENTO);
 }
 
 function camposAgente(l) {
@@ -197,10 +206,10 @@ function camposAgente(l) {
     + entrada({ n: 'web', e: 'Sitio web', tipo: 'url', ayuda: 'Debe empezar con http:// o https://.', extra: 'inputmode="url"' })
     + entrada({ n: 'instagram', e: 'Instagram (enlace)', tipo: 'url', extra: 'inputmode="url"' })
     + entrada({ n: 'facebook', e: 'Facebook (enlace)', tipo: 'url', extra: 'inputmode="url"' })
-    + entrada({ n: 'otras_redes', e: 'Otras redes' })
+    + entrada({ n: 'otras_redes', e: 'Otras redes', ayuda: 'Pega enlaces completos, con http:// o https://, separados por punto y coma (;). Lo que no sea un enlace se mostrará como texto.' })
     + entrada({ n: 'email_publico', e: 'Correo público', tipo: 'email', extra: 'inputmode="email"' })
     + entrada({ n: 'logo_url', e: 'Logo (enlace a la imagen)', tipo: 'url', extra: 'inputmode="url"' })
-    + tusDatos(true);
+    + tusDatos(false);
 }
 
 function camposConvocatoria(l, agentes) {
@@ -223,7 +232,7 @@ function camposConvocatoria(l, agentes) {
     + entrada({ n: 'fecha_apertura', e: 'Fecha de apertura', tipo: 'date' })
     + entrada({ n: 'fecha_cierre', e: 'Fecha de cierre', r: true, tipo: 'date' })
     + entrada({ n: 'fecha_resultados', e: 'Fecha de resultados', tipo: 'date' })
-    + tusDatos(true);
+    + tusDatos(false);
 }
 
 function nombreDeRegistro(datos, registroId) {
@@ -239,7 +248,7 @@ function camposSugerencia(datos, registroId) {
     + seleccion({ n: 'campo', e: 'Qué dato cambia', r: true, opciones: campos })
     + area({ n: 'valor_propuesto', e: 'Valor propuesto', r: true, ayuda: 'Escribe cómo debería quedar.' })
     + entrada({ n: 'fuente', e: 'Fuente', ayuda: 'Un enlace o referencia que respalde el cambio (opcional).' })
-    + tusDatos(false);
+    + tusDatos(true);
 }
 
 // Contenido interior del <dialog> para un modo.
@@ -393,7 +402,7 @@ export function abrirFormulario({ modo = 'elegir', datos, registroId = '' } = {}
   function exito() {
     dlg.innerHTML = '<div class="form__panel"><button type="button" class="btn form__cerrar" data-cerrar-form>Cerrar</button>'
       + '<h2 id="form-titulo" class="form__titulo" tabindex="-1">¡Gracias!</h2>'
-      + `<p id="form-exito" role="status">${esc(MSG_EXITO)}</p></div>`;
+      + `<p id="form-exito" role="status">${esc(mensajeExito(estado.modo))}</p></div>`;
     dlg.setAttribute('aria-describedby', 'form-exito');
     dlg.querySelector('#form-titulo').focus();
   }

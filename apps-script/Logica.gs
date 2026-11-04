@@ -116,7 +116,7 @@ function publicar(registros, publicas) {
   var esConvocatoria = publicas.indexOf('fecha_cierre') !== -1;
   var salida = [];
   registros.forEach(function (r) {
-    if (r.estado !== 'aprobado') return;
+    if (r.estado !== 'aprobado' || ausente(r.id)) return;
     var o = {};
     publicas.forEach(function (col) {
       var v = r[col];
@@ -125,12 +125,32 @@ function publicar(registros, publicas) {
       else if (col.indexOf('fecha_') === 0) o[clave] = fechaIso(v);
       else if (col === 'verificado') o[clave] = v === true || v === 'sí' || v === 'si';
       else if (col === 'lat' || col === 'lng' || col === 'año') o[clave] = numeroOnull(v);
-      else o[clave] = v === null || v === undefined ? '' : v;
+      else o[clave] = v === null || v === undefined ? '' : String(v); // una celda numérica sigue siendo texto en el JSON
     });
-    if (esConvocatoria && !esFechaIso(o.fechaCierre)) return;
+    if (esConvocatoria && (!esFechaIso(o.fechaCierre) || o.anio === null)) return;
     salida.push(o);
   });
   return salida;
+}
+
+// Una convocatoria solo es pública si su agente también lo es (no archivado ni pendiente).
+function conAgenteAprobado(convocatorias, ids) {
+  return convocatorias.filter(function (c) { return ids.has(String(c.agenteId).trim()); });
+}
+
+// Control que le falta a una fila cargada a mano: solo celdas vacías, nunca pisa lo que ya escribió el script.
+// La capa espera a que haya presencia: el nombre suele escribirse antes y luego no se corregiría sola.
+function camposPorCompletar(tipo, r, prefijo, hoy, aleatorio) {
+  var campos = {};
+  var esConvocatoria = tipo === 'convocatoria';
+  if (ausente(esConvocatoria ? r.titulo : r.nombre)) return campos;
+  if (ausente(r.id)) campos.id = nuevoId(prefijo, aleatorio);
+  if (ausente(r.fecha_envio)) campos.fecha_envio = hoy;
+  if (!esConvocatoria) {
+    if (ausente(r.origen)) campos.origen = 'carga inicial';
+    if (ausente(r.capa) && !ausente(r.presencia)) campos.capa = esInternacional(r.presencia) ? 'Internacional' : 'Perú';
+  }
+  return campos;
 }
 
 var OBLIGATORIO = 'Este campo es obligatorio.';
@@ -138,6 +158,7 @@ var RE_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 var RE_URL = /^https?:\/\//;
 var MAX_TEXTO = 2000;
 var MAX_DESCRIPCION = 280;
+var MAX_NOMBRE_PROPONENTE = 100;
 
 function ausente(v) {
   return v === null || v === undefined || (typeof v === 'string' && v.trim() === '');
@@ -209,7 +230,7 @@ function validarEnvio(tipo, d, listas, idsAprobados) {
     texto('descripcion', true, MAX_DESCRIPCION);
     urlCampo('web', false); urlCampo('instagram', false); urlCampo('facebook', false); urlCampo('logo_url', false);
     correoCampo('email_publico', false);
-    texto('nombre_proponente', true);
+    texto('nombre_proponente', true, MAX_NOMBRE_PROPONENTE);
     correoCampo('email_proponente', true);
     consentimiento();
   } else if (tipo === 'convocatoria') {
@@ -226,7 +247,13 @@ function validarEnvio(tipo, d, listas, idsAprobados) {
     fechaCampo('fecha_apertura', false);
     fechaCampo('fecha_cierre', true);
     fechaCampo('fecha_resultados', false);
-    texto('nombre_proponente', true);
+    if (!e.fecha_apertura && !e.fecha_cierre && !ausente(d.fecha_apertura) && d.fecha_apertura.trim() > d.fecha_cierre.trim()) {
+      e.fecha_apertura = 'La apertura debe ser antes del cierre.';
+    }
+    if (!e.anio && !e.fecha_cierre && Number(d.anio) !== Number(d.fecha_cierre.trim().slice(0, 4))) {
+      e.anio = 'El año debe coincidir con la fecha de cierre.';
+    }
+    texto('nombre_proponente', true, MAX_NOMBRE_PROPONENTE);
     correoCampo('email_proponente', true);
     consentimiento();
   } else if (tipo === 'sugerencia') {
@@ -280,9 +307,14 @@ function correo(tipo, datos) {
       (datos.enlace ? 'Ábrelo en la hoja: ' + datos.enlace + '\n\n' : '') +
       FIRMA;
   } else if (tipo === 'acuse') {
-    asunto = 'Recibimos tu propuesta en Chicha';
-    cuerpo = 'Hola' + (datos.nombreProponente ? ' ' + datos.nombreProponente : '') + ',\n\n' +
-      'Recibimos tu propuesta. Te escribiremos cuando la revisemos.\n\n' + FIRMA;
+    // Sale a una dirección sin verificar: sin ningún texto del usuario, para que no sirva de relé de spam.
+    var esSugerencia = datos.tipo === 'sugerencia';
+    asunto = esSugerencia ? 'Recibimos tu sugerencia en Chicha' : 'Recibimos tu propuesta en Chicha';
+    cuerpo = 'Hola,\n\n' +
+      (esSugerencia
+        ? 'Recibimos tu sugerencia de cambio. La revisaremos y, si corresponde, aplicaremos el cambio.'
+        : 'Recibimos tu propuesta. Te escribiremos cuando la revisemos.') +
+      '\n\n' + FIRMA;
   } else if (tipo === 'aprobado') {
     asunto = (datos.nombre || '') + ' ya está en Chicha';
     cuerpo = 'Hola' + (datos.nombreProponente ? ' ' + datos.nombreProponente : '') + ',\n\n' +

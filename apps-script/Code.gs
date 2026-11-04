@@ -16,8 +16,9 @@ var MAX_BYTES_PROPIEDADES = 400000;     // margen bajo el total de 500 KB del al
 var PROP_AVISO_ESTRUCTURA = 'aviso_estructura_ms';
 var PROP_RECORDATORIO = 'recordatorio_anio';
 var MS_24H = 24 * 60 * 60 * 1000;
-var LIMITE_ENVIOS_HORA = 30;
+var LIMITE_ENVIOS_HORA = 12;
 var CUOTA_MINIMA = 5;
+var CUOTA_MINIMA_ACUSE = 20;            // por debajo, los acuses esperan en _cola: la cuota queda para moderar
 var ESPERA_LOCK_MS = 10000;
 
 var COLUMNAS_LISTAS = ['ofrece', 'sectores', 'tipos_entidad', 'presencia', 'departamentos', 'tipos_convocatoria'];
@@ -25,11 +26,14 @@ var COLUMNAS_COLA = ['fecha', 'destinatario', 'asunto', 'cuerpo', 'intentos'];
 var MAX_INTENTOS_COLA = 3;
 var MAX_LOTE_COLA = 50;
 
-var HOJAS = {
-  agente: { nombre: 'Agentes', columnas: COLUMNAS_AGENTES, prefijo: 'ag' },
-  convocatoria: { nombre: 'Convocatorias', columnas: COLUMNAS_CONVOCATORIAS, prefijo: 'cv' },
-  sugerencia: { nombre: 'Sugerencias', columnas: COLUMNAS_SUGERENCIAS, prefijo: 'sg' }
-};
+// Función y no constante: COLUMNAS_* vive en Logica.gs y el orden de carga de los archivos no está garantizado.
+function hojas() {
+  return {
+    agente: { nombre: 'Agentes', columnas: COLUMNAS_AGENTES, prefijo: 'ag' },
+    convocatoria: { nombre: 'Convocatorias', columnas: COLUMNAS_CONVOCATORIAS, prefijo: 'cv' },
+    sugerencia: { nombre: 'Sugerencias', columnas: COLUMNAS_SUGERENCIAS, prefijo: 'sg' }
+  };
+}
 
 // Campos que el formulario puede escribir (lista blanca). Nunca columnas de control ni de moderación.
 var CAMPOS_ENTRADA = {
@@ -85,7 +89,7 @@ function leerListas(tabla) {
 function idsAprobados(tablaAgentes) {
   var ids = new Set();
   tablaAgentes.registros.forEach(function (r) {
-    if (r.estado === 'aprobado' && r.id) ids.add(String(r.id).trim());
+    if (r.estado === 'aprobado' && !ausente(r.id)) ids.add(String(r.id).trim());
   });
   return ids;
 }
@@ -131,7 +135,7 @@ function doGet(e) {
     var contenido = {
       listas: leerListas(tablaListas),
       agentes: publicar(agentes.registros, PUBLICAS_AGENTES),
-      convocatorias: publicar(convocatorias.registros, PUBLICAS_CONVOCATORIAS)
+      convocatorias: conAgenteAprobado(publicar(convocatorias.registros, PUBLICAS_CONVOCATORIAS), idsAprobados(agentes))
     };
     // La huella se calcula sin `generado`, que cambia en cada lectura.
     var huella = Utilities.base64Encode(Utilities.computeDigest(
@@ -252,7 +256,8 @@ function doPost(e) {
   if (esSpam({ sitio_web_2: d.sitio_web_2, t0: cuerpo.t0 }, Date.now())) return json({ ok: true });
 
   try {
-    var conf = Object.prototype.hasOwnProperty.call(HOJAS, tipo) ? HOJAS[tipo] : null;
+    var confHojas = hojas();
+    var conf = Object.prototype.hasOwnProperty.call(confHojas, tipo) ? confHojas[tipo] : null;
     if (!conf) return json({ ok: false, errores: validarEnvio(tipo, d, {}, new Set()) });
     var hoja = libro().getSheetByName(conf.nombre);
     var encabezados = encabezadosDe(hoja);
@@ -343,12 +348,18 @@ function avisarEnvioNuevo(tipo, registro, enlace) {
     resumen: resumen,
     enlace: enlace
   });
-  try { enviarCorreo(MODERADOR, aMod.asunto, aMod.cuerpo); } catch (err) { console.error('correo moderador: ' + err); }
+  try {
+    enviarCorreo(MODERADOR, aMod.asunto, aMod.cuerpo);
+  } catch (err) {
+    console.error('correo moderador: ' + err);
+    // La fila ya está escrita: un fallo aquí no debe convertirse en error para quien envió.
+    try { encolar([[MODERADOR, aMod.asunto, aMod.cuerpo, 0]]); } catch (errCola) { console.error('cola moderador: ' + errCola); }
+  }
 
   var destino = sinApostrofo(registro.email_proponente || '');
   if (!destino) return;
-  var acuse = correo('acuse', { nombreProponente: sinApostrofo(registro.nombre_proponente || '') });
-  try { avisarProponente(destino, acuse.asunto, acuse.cuerpo); } catch (err2) { console.error('acuse: ' + err2); }
+  var acuse = correo('acuse', { tipo: tipo });
+  try { avisarProponente(destino, acuse.asunto, acuse.cuerpo, CUOTA_MINIMA_ACUSE); } catch (err2) { console.error('acuse: ' + err2); }
 }
 
 /* ---------- Correos y cola ---------- */
@@ -358,8 +369,8 @@ function enviarCorreo(destino, asunto, cuerpo) {
 }
 
 // Avisos a proponentes: si queda poca cuota diaria, se encolan en _cola para el día siguiente.
-function avisarProponente(destino, asunto, cuerpo) {
-  if (MailApp.getRemainingDailyQuota() < CUOTA_MINIMA) {
+function avisarProponente(destino, asunto, cuerpo, cuotaMinima) {
+  if (MailApp.getRemainingDailyQuota() < (cuotaMinima || CUOTA_MINIMA)) {
     encolar([[destino, asunto, cuerpo, 0]]);
     return;
   }
@@ -431,6 +442,52 @@ function despacharCola() {
   encolar(pendientes);
 }
 
+/* ---------- Carga inicial ---------- */
+
+// Completa id, capa, origen y fecha_envio de filas cargadas a mano, entre f0 y f1 (sin f1: hasta la última).
+// Devuelve cuántas filas cambió. Bajo candado y con flush: dos ediciones seguidas de una fila disparan dos
+// alEditar, y el segundo debe ver el id del primero en vez de generar otro.
+function completarFilas(hoja, tipo, f0, f1) {
+  if (!hoja) return 0;
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(ESPERA_LOCK_MS)) throw new Error('La hoja está ocupada. Intenta de nuevo en unos segundos.');
+  try {
+    var ultima = f1 ? Math.min(f1, hoja.getLastRow()) : hoja.getLastRow();
+    if (ultima < f0) return 0;
+    var encabezados = encabezadosDe(hoja);
+    var valores = hoja.getRange(f0, 1, ultima - f0 + 1, encabezados.length).getValues();
+    var prefijo = hojas()[tipo].prefijo;
+    var hoy = fechaIso(new Date());
+    var cambiadas = 0;
+    filasAObjetos(encabezados, valores).forEach(function (r, i) {
+      var campos = camposPorCompletar(tipo, r, prefijo, hoy);
+      var claves = Object.keys(campos);
+      claves.forEach(function (c) {
+        var col = encabezados.indexOf(c) + 1;
+        if (col) hoja.getRange(f0 + i, col).setValue(campos[c]);
+      });
+      if (claves.length) cambiadas++;
+    });
+    if (cambiadas) SpreadsheetApp.flush();
+    return cambiadas;
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// Disparador simple: añade el menú al abrir la hoja.
+function onOpen() {
+  SpreadsheetApp.getUi().createMenu('Chicha').addItem('Completar carga inicial', 'completarCargaInicial').addToUi();
+}
+
+function completarCargaInicial() {
+  var ss = libro();
+  var n = completarFilas(ss.getSheetByName('Agentes'), 'agente', 2) +
+    completarFilas(ss.getSheetByName('Convocatorias'), 'convocatoria', 2);
+  CacheService.getScriptCache().remove(CLAVE_CACHE);
+  ss.toast('Filas completadas: ' + n + '.', 'Chicha');
+}
+
 /* ---------- Disparadores ---------- */
 
 // Disparador instalable "Al editar" (lo crea instalarDisparadores). No se llama onEdit para no
@@ -446,6 +503,16 @@ function alEditar(e) {
   cache.remove(CLAVE_CACHE);
   if (nombre === 'Listas') return;
 
+  var f0 = Math.max(2, e.range.getRow());
+  var f1 = e.range.getRow() + e.range.getNumRows() - 1;
+  if (f1 >= f0) {
+    try {
+      if (completarFilas(hoja, nombre === 'Agentes' ? 'agente' : 'convocatoria', f0, f1)) cache.remove(CLAVE_CACHE);
+    } catch (errFilas) {
+      console.error('completarFilas: ' + errFilas); // el menú puede completarlas después; los avisos siguen
+    }
+  }
+
   var encabezados = encabezadosDe(hoja);
   var colEstado = encabezados.indexOf('estado') + 1;
   var c0 = e.range.getColumn();
@@ -457,8 +524,6 @@ function alEditar(e) {
     return;
   }
 
-  var f0 = Math.max(2, e.range.getRow());
-  var f1 = e.range.getRow() + e.range.getNumRows() - 1;
   if (f1 < f0) return;
   var valores = hoja.getRange(f0, 1, f1 - f0 + 1, encabezados.length).getValues();
   var registros = filasAObjetos(encabezados, valores);

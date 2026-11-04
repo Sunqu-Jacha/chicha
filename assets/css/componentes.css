@@ -250,6 +250,7 @@ a.chip--activo:hover { background: var(--rojo-oscuro); border-color: var(--rojo-
 .conv__meta { margin-bottom: var(--e-2); color: var(--gris-texto); }
 .conv__meta a { display: inline-flex; align-items: center; min-height: var(--objetivo-tactil); color: var(--negro); font-weight: 500; }
 .conv__estado { display: flex; flex-wrap: wrap; align-items: center; gap: var(--e-2); margin-bottom: var(--e-1); }
+.conv__detalle { margin: 0 0 var(--e-1); }
 .conv__bases { margin: 0; }
 .conv__bases a { display: inline-flex; align-items: center; min-height: var(--objetivo-tactil); font-weight: 500; }
 

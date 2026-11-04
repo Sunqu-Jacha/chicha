@@ -1,5 +1,6 @@
 import test from 'node:test'; import assert from 'node:assert/strict';
 import { cargarGs } from './cargar-gs.js';
+import { readFileSync } from 'node:fs';
 import { validarEnvio, esInternacional } from '../assets/js/validacion.js';
 
 const gs = cargarGs('apps-script/Logica.gs');
@@ -84,6 +85,9 @@ const CASOS = [
   ['consentimiento 1', 'agente', con(agenteOk, { consentimiento: 1 })],
   ['consentimiento ausente', 'agente', sin(agenteOk, 'consentimiento')],
   ['otras_redes larga', 'agente', con(agenteOk, { otras_redes: 'a'.repeat(2001) })],
+  ['nombre_proponente 100', 'agente', con(agenteOk, { nombre_proponente: 'a'.repeat(100) })],
+  ['nombre_proponente 101', 'agente', con(agenteOk, { nombre_proponente: 'a'.repeat(101) })],
+  ['nombre_proponente 100 + espacios', 'agente', con(agenteOk, { nombre_proponente: ` ${'a'.repeat(100)} ` })],
 
   ['convocatoria ok', 'convocatoria', convOk()],
   ['convocatoria vacía', 'convocatoria', {}],
@@ -125,6 +129,22 @@ const CASOS = [
   ['fecha_apertura ok', 'convocatoria', con(convOk, { fecha_apertura: '2027-02-01' })],
   ['fecha_resultados mal', 'convocatoria', con(convOk, { fecha_resultados: 'pronto' })],
   ['convocatoria sin consentimiento', 'convocatoria', con(convOk, { consentimiento: false })],
+  ['conv nombre_proponente 100', 'convocatoria', con(convOk, { nombre_proponente: 'a'.repeat(100) })],
+  ['conv nombre_proponente 101', 'convocatoria', con(convOk, { nombre_proponente: 'a'.repeat(101) })],
+  ['M-4 apertura después del cierre', 'convocatoria', con(convOk, { fecha_apertura: '2027-03-15' })],
+  ['M-4 apertura igual al cierre', 'convocatoria', con(convOk, { fecha_apertura: '2027-03-14' })],
+  ['M-4 apertura antes del cierre', 'convocatoria', con(convOk, { fecha_apertura: '2027-03-13' })],
+  ['M-4 apertura con espacios', 'convocatoria', con(convOk, { fecha_apertura: ' 2027-03-15 ', fecha_cierre: ' 2027-03-14 ' })],
+  ['M-4 apertura inválida', 'convocatoria', con(convOk, { fecha_apertura: '2027-99-99' })],
+  ['M-4 apertura número', 'convocatoria', con(convOk, { fecha_apertura: 20270315 })],
+  ['M-4 cierre inválido con apertura', 'convocatoria', con(convOk, { fecha_apertura: '2027-03-15', fecha_cierre: 'x' })],
+  ['M-4 cierre ausente con apertura', 'convocatoria', { ...sin(convOk, 'fecha_cierre'), fecha_apertura: '2027-03-15' }],
+  ['M-4 año distinto', 'convocatoria', con(convOk, { anio: 2026 })],
+  ['M-4 año distinto en texto', 'convocatoria', con(convOk, { anio: '2028' })],
+  ['M-4 año igual con espacios', 'convocatoria', con(convOk, { anio: ' 2027 ', fecha_cierre: ' 2027-03-14 ' })],
+  ['M-4 año inválido no compara', 'convocatoria', con(convOk, { anio: 1999 })],
+  ['M-4 año y cierre inválidos', 'convocatoria', con(convOk, { anio: 'x', fecha_cierre: 'y' })],
+  ['M-4 ambos errores', 'convocatoria', con(convOk, { anio: 2026, fecha_apertura: '2027-03-15' })],
 
   ['sugerencia ok', 'sugerencia', sugOk()],
   ['sugerencia vacía', 'sugerencia', {}],
@@ -185,4 +205,31 @@ test('casos concretos con mensajes esperados', () => {
   assert.equal(validarEnvio('convocatoria', con(convOk, { anio: 1999 }), LISTAS, APROBADOS).anio, 'Revisa el año.');
   assert.equal(validarEnvio('agente', con(agenteOk, { presencia: 'Internacional', departamento: undefined }), LISTAS).departamento, undefined);
   assert.equal(validarEnvio('agente', con(agenteOk, { presencia: 'internacional', departamento: undefined }), LISTAS).departamento, 'Este campo es obligatorio.');
+});
+
+test('M-4: coherencia de fechas con mensajes exactos', () => {
+  const e = (cambios) => validarEnvio('convocatoria', con(convOk, cambios), LISTAS, APROBADOS);
+  assert.equal(e({ fecha_apertura: '2027-03-15' }).fecha_apertura, 'La apertura debe ser antes del cierre.');
+  assert.equal(e({ fecha_apertura: '2027-03-14' }).fecha_apertura, undefined);
+  assert.equal(e({ anio: 2026 }).anio, 'El año debe coincidir con la fecha de cierre.');
+  assert.equal(e({ anio: 1999 }).anio, 'Revisa el año.');
+  assert.equal(e({ fecha_apertura: 'x' }).fecha_apertura, 'Usa el formato AAAA-MM-DD.');
+});
+
+test('I-5: nombre_proponente con mensaje exacto en el navegador', () => {
+  assert.equal(validarEnvio('agente', con(agenteOk, { nombre_proponente: 'a'.repeat(101) }), LISTAS).nombre_proponente, 'Máximo 100 caracteres.');
+});
+
+test('datos-ejemplo.json sigue validando en ambos lados', () => {
+  const ejemplo = JSON.parse(readFileSync(new URL('../assets/datos-ejemplo.json', import.meta.url), 'utf8'));
+  const aSnake = (o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`), v]));
+  const proponente = { nombre_proponente: 'Ana', email_proponente: 'ana@correo.pe', consentimiento: true };
+  const ids = new Set(ejemplo.agentes.map((a) => a.id));
+  for (const [tipo, filas] of [['agente', ejemplo.agentes], ['convocatoria', ejemplo.convocatorias]]) {
+    for (const fila of filas) {
+      const d = { ...aSnake(fila), ...proponente };
+      assert.deepStrictEqual(aJson(validarEnvio(tipo, d, ejemplo.listas, ids)), {}, fila.id);
+      assert.deepStrictEqual(aJson(gs.validarEnvio(tipo, d, ejemplo.listas, ids)), {}, fila.id);
+    }
+  }
 });

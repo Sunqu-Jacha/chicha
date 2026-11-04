@@ -273,3 +273,82 @@ test('esSpam (R15): transcurrido negativo no es spam; solo 0 <= t < 4000 ms lo e
   assert.equal(gs.esSpam({ t0: 'abc' }, 10000), true);
   assert.equal(gs.esSpam({}, 10000), true);
 });
+
+// ---- Revisión final ----
+test('C-1: publicar omite filas sin id y convierte el id a texto', () => {
+  const ags = gs.publicar([filaAgente({ id: '' }), filaAgente({ id: null }), filaAgente({ id: '  ' }), filaAgente({ id: 7 }), filaAgente({ id: 0 })], gs.PUBLICAS_AGENTES);
+  laxo(ags.map((a) => a.id), ['7', '0']);
+  assert.strictEqual(ags[0].id, '7');
+  const cs = gs.publicar([filaConv({ id: '' }), filaConv({ id: 12, agente_id: 7 })], gs.PUBLICAS_CONVOCATORIAS);
+  assert.equal(cs.length, 1);
+  assert.strictEqual(cs[0].id, '12');
+  assert.strictEqual(cs[0].agenteId, '7');
+});
+
+test('C-1: camposPorCompletar llena solo huecos de agentes con nombre', () => {
+  const al = () => 0;
+  laxo(gs.camposPorCompletar('agente', { nombre: 'Casa', presencia: 'Peruana', id: '', capa: '', origen: '', fecha_envio: '' }, 'ag', '2026-11-04', al),
+    { id: 'ag-000000', fecha_envio: '2026-11-04', origen: 'carga inicial', capa: 'Perú' });
+  assert.equal(gs.camposPorCompletar('agente', { nombre: 'Casa', presencia: 'Internacional' }, 'ag', '2026-11-04', al).capa, 'Internacional');
+  laxo(gs.camposPorCompletar('agente', { nombre: '  ', presencia: 'Peruana' }, 'ag', '2026-11-04', al), {});
+  // La presencia puede escribirse después del nombre: la capa espera a conocerla.
+  assert.ok(!('capa' in gs.camposPorCompletar('agente', { nombre: 'Casa', presencia: '' }, 'ag', '2026-11-04', al)));
+});
+
+test('C-1: camposPorCompletar no pisa filas escritas por el script', () => {
+  const fila = { nombre: 'Casa', presencia: 'Internacional', id: 'ag-abc123', capa: 'Internacional', origen: 'formulario', fecha_envio: new Date('2026-10-01T12:00:00Z') };
+  laxo(gs.camposPorCompletar('agente', fila, 'ag', '2026-11-04'), {});
+  laxo(gs.camposPorCompletar('agente', { ...fila, id: 5 }, 'ag', '2026-11-04'), {});
+  laxo(gs.camposPorCompletar('convocatoria', { titulo: 'F', id: 'cv-abc123', fecha_envio: '2026-10-01' }, 'cv', '2026-11-04'), {});
+});
+
+test('C-1: camposPorCompletar en convocatorias solo llena id y fecha_envio', () => {
+  laxo(gs.camposPorCompletar('convocatoria', { titulo: 'Fondo', id: '', fecha_envio: '', presencia: 'Peruana' }, 'cv', '2026-11-04', () => 0),
+    { id: 'cv-000000', fecha_envio: '2026-11-04' });
+  laxo(gs.camposPorCompletar('convocatoria', { titulo: '' }, 'cv', '2026-11-04'), {});
+});
+
+test('I-4: conAgenteAprobado deja solo convocatorias de agentes aprobados', () => {
+  const ids = new Set(['ag-1', '7']);
+  const r = gs.conAgenteAprobado([{ id: 'a', agenteId: 'ag-1' }, { id: 'b', agenteId: 'ag-archivado' }, { id: 'c', agenteId: '' }, { id: 'd', agenteId: 7 }, { id: 'e' }], ids);
+  laxo(r.map((c) => c.id), ['a', 'd']);
+});
+
+test('M-1: publicar omite convocatorias sin año válido', () => {
+  const r = gs.publicar([filaConv({ id: 'a', 'año': '' }), filaConv({ id: 'b', 'año': null }), filaConv({ id: 'c', 'año': 'pronto' }), filaConv({ id: 'd', 'año': 2027 })], gs.PUBLICAS_CONVOCATORIAS);
+  laxo(r.map((c) => c.id), ['d']);
+});
+
+test('M-2: publicar convierte a texto las columnas de texto', () => {
+  const c = gs.publicar([filaConv({ titulo: 2027, monto: 5000, descripcion: 12, tipo: 3, enlace_bases: 1 })], gs.PUBLICAS_CONVOCATORIAS)[0];
+  for (const k of ['titulo', 'monto', 'descripcion', 'tipo', 'enlaceBases']) assert.strictEqual(typeof c[k], 'string', k);
+  assert.strictEqual(c.titulo, '2027');
+  const a = gs.publicar([filaAgente({ nombre: 1984, ciudad: 5, descripcion: 0 })], gs.PUBLICAS_AGENTES)[0];
+  assert.strictEqual(a.nombre, '1984');
+  assert.strictEqual(a.ciudad, '5');
+  assert.strictEqual(a.descripcion, '0');
+  assert.strictEqual(a.lng, -71.9);
+  assert.strictEqual(a.verificado, true);
+});
+
+test('I-5: el acuse no lleva ningún texto del usuario', () => {
+  const m = gs.correo('acuse', { nombreProponente: 'SPAM http://malo.pe', titulo: 'SPAM', nombre: 'SPAM', resumen: 'SPAM', tipo: 'agente' });
+  assert.ok(!m.asunto.includes('SPAM'));
+  assert.ok(!m.cuerpo.includes('SPAM'));
+  assert.match(m.cuerpo, /^Hola,/);
+});
+
+test('M-3: el acuse de una sugerencia no promete un correo con el resultado', () => {
+  const s = gs.correo('acuse', { tipo: 'sugerencia' });
+  assert.equal(s.asunto, 'Recibimos tu sugerencia en Chicha');
+  assert.ok(!/te escribiremos|resultado/i.test(s.cuerpo));
+  assert.match(gs.correo('acuse', { tipo: 'agente' }).cuerpo, /Te escribiremos cuando la revisemos/);
+});
+
+test('I-5: nombre_proponente máximo 100 caracteres', () => {
+  const con = (tipo, base, n) => gs.validarEnvio(tipo, Object.assign(base(), { nombre_proponente: 'a'.repeat(n) }), LISTAS, APROBADOS).nombre_proponente;
+  for (const [tipo, base] of [['agente', agenteOk], ['convocatoria', convOk]]) {
+    assert.equal(con(tipo, base, 100), undefined);
+    assert.equal(con(tipo, base, 101), 'Máximo 100 caracteres.');
+  }
+});

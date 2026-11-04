@@ -259,10 +259,16 @@ async function cargar({ enfocar = false } = {}) {
   estado.cargando = true;
   if (estado.pendienteForm) avisarForm('Cargando el mapa para abrir el formulario…', '');
   if (!estado.datos) $vista.innerHTML = '<p class="vista__espera">Cargando el mapa…</p>';
-  const { datos, origen } = await cargarDatos({
-    url: URL_DATOS,
-    alGuardado: (copia) => { estado.datos = copia; estado.origen = null; pintar(); },
-  });
+  let resultado = { datos: null, origen: 'ninguno' }; // cualquier fallo inesperado acaba en el aviso con Reintentar
+  try {
+    resultado = await cargarDatos({
+      url: URL_DATOS,
+      alGuardado: (copia) => { estado.datos = copia; estado.origen = null; pintar(); },
+    });
+  } catch (err) {
+    console.error('cargar:', err);
+  }
+  const { datos, origen } = resultado;
   estado.cargando = false;
   const igual = datos && estado.datos && JSON.stringify(datos) === JSON.stringify(estado.datos);
   if (datos) estado.datos = datos;

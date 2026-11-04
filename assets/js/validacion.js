@@ -6,6 +6,7 @@ const RE_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const RE_URL = /^https?:\/\//;
 const MAX_TEXTO = 2000;
 export const MAX_DESCRIPCION = 280;
+const MAX_NOMBRE_PROPONENTE = 100;
 
 // Presencia "Internacional" (sin sede en el Perú): capa Internacional, sin departamento.
 export function esInternacional(presencia) {
@@ -89,7 +90,7 @@ export function validarEnvio(tipo, datos, listas, idsAprobados) {
     texto('descripcion', true, MAX_DESCRIPCION);
     urlCampo('web', false); urlCampo('instagram', false); urlCampo('facebook', false); urlCampo('logo_url', false);
     correoCampo('email_publico', false);
-    texto('nombre_proponente', true);
+    texto('nombre_proponente', true, MAX_NOMBRE_PROPONENTE);
     correoCampo('email_proponente', true);
     consentimiento();
   } else if (tipo === 'convocatoria') {
@@ -106,7 +107,13 @@ export function validarEnvio(tipo, datos, listas, idsAprobados) {
     fechaCampo('fecha_apertura', false);
     fechaCampo('fecha_cierre', true);
     fechaCampo('fecha_resultados', false);
-    texto('nombre_proponente', true);
+    if (!e.fecha_apertura && !e.fecha_cierre && !ausente(d.fecha_apertura) && d.fecha_apertura.trim() > d.fecha_cierre.trim()) {
+      e.fecha_apertura = 'La apertura debe ser antes del cierre.';
+    }
+    if (!e.anio && !e.fecha_cierre && Number(d.anio) !== Number(d.fecha_cierre.trim().slice(0, 4))) {
+      e.anio = 'El año debe coincidir con la fecha de cierre.';
+    }
+    texto('nombre_proponente', true, MAX_NOMBRE_PROPONENTE);
     correoCampo('email_proponente', true);
     consentimiento();
   } else if (tipo === 'sugerencia') {

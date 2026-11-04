@@ -228,3 +228,38 @@ test('validos: en convocatorias el tipo se valida contra tiposConvocatoria', () 
   assert.ok(validos(ejemplo, 'convocatorias').tipos.has('beca'));
   assert.ok(!validos(ejemplo, 'explorar').tipos.has('beca'));
 });
+
+test('I-2: la convocatoria muestra descripción, monto y resultados, escapados', () => {
+  const extra = { descripcion: '<i>Para colectivos</i>', monto: 'Hasta S/ 10 000 & más', fechaResultados: '2027-05-01' };
+  const lista = renderConvocatorias(datosConv([conv(extra)]), leerRuta('#/convocatorias'), '2026-11-04');
+  const ficha = renderFicha(agente(), [conv(extra)], '2026-11-04');
+  for (const html of [lista, ficha]) {
+    assert.ok(html.includes('&lt;i&gt;Para colectivos&lt;/i&gt;'));
+    assert.ok(!html.includes('<i>Para'));
+    assert.ok(html.includes('Monto: Hasta S/ 10 000 &amp; más'));
+    assert.ok(html.includes('Resultados: <time datetime="2027-05-01">1 de mayo de 2027</time>'));
+  }
+});
+
+test('I-2: sin esos datos no aparecen sus etiquetas', () => {
+  const extra = { descripcion: '', monto: '', fechaResultados: null };
+  for (const html of [renderConvocatorias(datosConv([conv(extra)]), leerRuta('#/convocatorias'), '2026-11-04'), renderFicha(agente(), [conv(extra)], '2026-11-04')]) {
+    assert.ok(!html.includes('Monto:'));
+    assert.ok(!html.includes('Resultados:'));
+  }
+});
+
+test('M-6: otras redes que no son enlace se muestran como texto escapado', () => {
+  const html = renderFicha(agente({ otrasRedes: 'TikTok: @casa; <b>Radio</b>; https://tiktok.com/@casa; javascript:alert(1)' }), [], '2026-11-04');
+  assert.ok(html.includes('<li>TikTok: @casa</li>'));
+  assert.ok(html.includes('<li>&lt;b&gt;Radio&lt;/b&gt;</li>'));
+  assert.match(html, /<a href="https:\/\/tiktok\.com\/@casa"/);
+  assert.ok(!/javascript:/i.test(html));
+});
+
+test('M-3: Sobre Chicha no promete resultado por correo a las sugerencias', () => {
+  const html = renderSobre();
+  assert.ok(html.includes('Quien hace una propuesta recibe un correo con el resultado.'));
+  assert.ok(html.includes('no generan un correo con el resultado'));
+  assert.ok(html.includes('no enviamos aviso del resultado'));
+});

@@ -88,3 +88,20 @@ test('sin AbortSignal.timeout (navegadores viejos) la carga sigue funcionando si
     assert.equal(r.origen, 'red'); assert.equal(opciones.signal, undefined);
   } finally { AbortSignal.timeout = original; }
 });
+
+test('localStorage bloqueado (getter que lanza) no rompe la carga', async () => {
+  const original = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+  Object.defineProperty(globalThis, 'localStorage', { configurable: true, get() { throw new Error('SecurityError'); } });
+  try {
+    const r = await cargarDatos({ url: 'u', fetchFn: fetchOk(D('n')) });
+    assert.equal(r.origen, 'red'); assert.equal(r.datos.generado, 'n');
+    assert.deepEqual(await cargarDatos({ url: 'u', fetchFn: fetchCaido }), { datos: null, origen: 'ninguno' });
+  } finally {
+    if (original) Object.defineProperty(globalThis, 'localStorage', original);
+    else delete globalThis.localStorage;
+  }
+});
+
+test('sin fetch disponible: camino "ninguno"', async () => {
+  assert.deepEqual(await cargarDatos({ url: 'u', fetchFn: null, almacen: null }), { datos: null, origen: 'ninguno' });
+});

@@ -2,7 +2,7 @@ import { esc, slug, urlSegura } from '../texto.js';
 import { criteriosVacios, contarPorValor } from '../filtros.js';
 import { escribirRuta } from '../rutas.js';
 import { filtrarConvocatorias, agruparPorMes, aniosDisponibles } from '../convocatorias.js';
-import { enlaceExterno, insigniaEstado, fechaClave, partesFecha, mayusculaInicial } from './comunes.js';
+import { enlaceExterno, insigniaEstado, fechaClave, partesFecha, mayusculaInicial, detallesConvocatoria } from './comunes.js';
 import { grupoFiltro, hojaFiltros, plural } from './explorar.js';
 
 const GRUPOS_CONV = [
@@ -26,6 +26,7 @@ function item(c, agente, hoy) {
     + `<h3 class="conv__titulo">${esc(c.titulo)}</h3>`
     + `<p class="conv__meta">${meta}</p>`
     + `<p class="conv__estado">${insigniaEstado(c, hoy)}${internacional}</p>`
+    + detallesConvocatoria(c, 'conv__detalle')
     + (bases ? `<p class="conv__bases">${enlaceExterno(bases, `Ver bases<span class="solo-lector">: ${esc(c.titulo)}</span>`)}</p>` : '')
     + '</div></li>';
 }

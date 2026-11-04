@@ -15,12 +15,7 @@ Chicha es un directorio público y filtrable de agentes y convocatorias para el 
 3. Ejecuta `crearEstructura` y acepta los permisos. Crea las pestañas, validaciones, listas y datos de ejemplo.
 4. Ejecuta `instalarDisparadores` (crea `alEditar` y `recordatorioAnual`).
 5. **Implementar › Nueva implementación › Aplicación web**: ejecutar como "yo", acceso "cualquier usuario". Copia la URL que termina en `/exec`.
-6. Pégala en `assets/js/config.js` como valor de `URL_SCRIPT`, estando en la rama `main` (ver "Publicar en GitHub Pages"), y publica:
-   ```
-   git add assets/js/config.js
-   git commit -m "config: URL del script"
-   git push
-   ```
+6. Guarda esa URL: la pegarás en `assets/js/config.js` en el paso 5 de "Publicar en GitHub Pages", cuando el repositorio remoto ya exista.
 7. Antes de dar por buena la hoja real, repite la checklist de la sección siguiente en una hoja de ensayo.
 
 ## Probar el script
@@ -70,6 +65,10 @@ Hazlo en una **hoja de ensayo** (no la real), con la cuenta sunqujacha@gmail.com
     - [ ] Llega **1** correo "[Chicha] Revisa la estructura de la hoja" (no uno por consulta).
     - [ ] Restaura el nombre `ciudad`.
 12. Recordatorio anual: en el editor ejecuta `recordatorioAnual`. Este año no envía nada, porque `instalarDisparadores` marca el año en curso si ya pasó el 5 de enero; solo despacha la cola `_cola` si tiene filas. El primer recordatorio sale el próximo 5 de enero (o el primer día siguiente en que el disparador corra).
+13. Recarga la hoja y escribe en una fila nueva de `Agentes` solo `nombre` y, después, `presencia`:
+    - [ ] Aparece el menú **Chicha › Completar carga inicial**.
+    - [ ] La fila queda con `id`, `fecha_envio`, `origen = carga inicial` y, al elegir la presencia, `capa`.
+    - [ ] Las filas que ya tenían esos datos no cambian, ni al editarlas ni al usar el menú.
 
 ## Publicar en GitHub Pages
 
@@ -86,7 +85,13 @@ Hazlo en una **hoja de ensayo** (no la real), con la cuenta sunqujacha@gmail.com
    git push -u origin main
    ```
 4. En el repositorio: **Settings › Pages › Build and deployment**: fuente **Deploy from a branch**, rama `main`, carpeta `/ (root)`.
-5. El sitio queda en `https://sunqujacha.github.io/chicha/`. Esa URL ya está en `index.html` (`og:url`, `og:image`, canonical), `sitemap.xml` y `robots.txt`; si cambia, actualízala en los tres.
+5. Estando en `main`, pega la URL `/exec` del script en `assets/js/config.js` como valor de `URL_SCRIPT` y publica:
+   ```
+   git add assets/js/config.js
+   git commit -m "config: URL del script"
+   git push
+   ```
+6. El sitio queda en `https://sunqujacha.github.io/chicha/`. Esa URL ya está en `index.html` (`og:url`, `og:image`, canonical), `sitemap.xml` y `robots.txt`; si cambia, actualízala en los tres.
 
 ## Actualizar después
 
@@ -99,8 +104,21 @@ Todo lo que llega por formulario entra a `Agentes` o `Convocatorias` con `estado
 
 - **Aprobar**: cambia `estado` a `aprobado`. Se escribe `fecha_aprobacion`, el sitio lo muestra tras vencer la caché (hasta 10 minutos) y el proponente recibe un correo con el enlace a su ficha. Marca `verificado = sí` solo si comprobaste los datos con la entidad.
 - **Rechazar**: escribe primero el motivo en `motivo_rechazo` y **después** cambia `estado` a `rechazado`; el correo al proponente incluye el motivo.
-- **Sugerencias de cambio** (pestaña `Sugerencias`): no modifican nada solas. Revisa cada una y aplica el cambio a mano en la fila del agente.
+- **Sugerencias de cambio** (pestaña `Sugerencias`): no modifican nada solas. Revisa cada una y aplica el cambio a mano en la fila del agente. Quien la envía recibe solo el acuse, no un correo con el resultado.
 - No edites `id`, `fecha_envio`, `fecha_aprobacion`, `aviso_enviado` ni `origen`. Las columnas del proponente y de moderación nunca salen de la hoja hacia el sitio.
+
+## Carga inicial
+
+Para cargar a mano los agentes y convocatorias del lanzamiento, con los disparadores ya instalados:
+
+1. Recarga la hoja: aparece el menú **Chicha**.
+2. Borra las filas de ejemplo que creó `crearEstructura` (2 en `Agentes` y 1 en `Convocatorias`).
+3. En `Agentes`, llena una fila por agente: `estado = aprobado`, `nombre`, `descripcion`, `ofrece` y `sectores` (varios valores separados por `;`), `tipo_entidad`, `presencia`, `pais`, `departamento`, `ciudad` y los enlaces que tenga. Deja vacíos `id`, `capa`, `origen` y `fecha_envio`.
+4. Al escribir o pegar, el script completa esas cuatro columnas: `id`, `fecha_envio` y `origen = carga inicial` en cuanto hay `nombre`, y `capa` en cuanto hay además `presencia`. Solo llena celdas vacías: nunca cambia una fila que ya tiene esos datos. Si corriges la `presencia` después, corrige también la `capa`.
+5. Para repasar todas las filas de una vez (por ejemplo, si algo se pegó antes de instalar los disparadores), usa **Chicha › Completar carga inicial**.
+6. En `Convocatorias`, llena `estado = aprobado`, `agente_id` (copia el `id` ya generado del agente), `titulo`, `año`, `tipo`, `enlace_bases` y `fecha_cierre`, más lo opcional. El script completa `id` y `fecha_envio` en cuanto hay `titulo`.
+
+No se publica una fila sin `id`, una convocatoria sin `año` o `fecha_cierre` válidos, ni una convocatoria cuyo agente no esté aprobado.
 
 ## Añadir valores a las listas
 

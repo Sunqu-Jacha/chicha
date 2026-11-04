@@ -72,3 +72,19 @@ export function partesFecha(iso) {
   const mes = MESES[m - 1] || '';
   return { dia: d, mes: mes.toLowerCase() };
 }
+
+// Descripción, monto y fecha de resultados, cada uno solo si existe.
+export function detallesConvocatoria(c, clase) {
+  const parrafo = (html) => `<p class="${clase}">${html}</p>`;
+  const descripcion = String(c.descripcion ?? '').trim();
+  const monto = String(c.monto ?? '').trim();
+  let html = '';
+  if (descripcion) html += parrafo(esc(descripcion));
+  if (monto) html += parrafo(`Monto: ${esc(monto)}`);
+  if (c.fechaResultados) {
+    const { dia, mes } = partesFecha(c.fechaResultados);
+    const anio = String(c.fechaResultados).slice(0, 4);
+    html += parrafo(`Resultados: <time datetime="${esc(c.fechaResultados)}">${esc(dia)} de ${esc(mes)} de ${esc(anio)}</time>`);
+  }
+  return html;
+}

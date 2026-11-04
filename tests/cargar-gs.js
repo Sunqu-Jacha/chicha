@@ -17,3 +17,17 @@ export function cargarGs(ruta) {
   vm.runInNewContext(codigo, contexto, { filename: abs });
   return contexto;
 }
+
+// Carga varios .gs en un mismo contexto y en el orden dado, como Apps Script al arrancar el proyecto.
+export function cargarVariosGs(rutas, globales = {}) {
+  const contexto = {
+    Intl, Date, Math, JSON, Set, Map, Array, Object, String, Number, Boolean, RegExp, Error,
+    isNaN, isFinite, parseFloat, parseInt, ...globales,
+  };
+  vm.createContext(contexto);
+  for (const ruta of rutas) {
+    const abs = path.isAbsolute(ruta) ? ruta : path.join(RAIZ, ruta);
+    vm.runInContext(fs.readFileSync(abs, 'utf8'), contexto, { filename: abs });
+  }
+  return contexto;
+}

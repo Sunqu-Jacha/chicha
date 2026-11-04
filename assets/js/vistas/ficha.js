@@ -1,5 +1,5 @@
 import { esc, slug, separarMulti, urlSegura } from '../texto.js';
-import { iconoDe, enlaceExterno, insigniaEstado, fechaClave, partesFecha } from './comunes.js';
+import { iconoDe, enlaceExterno, insigniaEstado, fechaClave, partesFecha, detallesConvocatoria } from './comunes.js';
 
 const PALABRAS_MENORES = new Set(['de', 'del', 'la', 'las', 'el', 'los', 'y', 'e', 'en', 'para']);
 
@@ -40,7 +40,10 @@ function enlaces(a) {
   externo(a.web, 'Sitio web');
   externo(a.instagram, 'Instagram');
   externo(a.facebook, 'Facebook');
-  for (const red of separarMulti(a.otrasRedes)) externo(red);
+  for (const red of separarMulti(a.otrasRedes)) {
+    if (urlSegura(red)) externo(red);
+    else if (!/^(javascript|vbscript|data):/i.test(red)) items.push(esc(red)); // "TikTok: @casa" se lee como texto
+  }
   const correo = urlSegura(a.emailPublico, { mailto: true });
   if (correo && correo.startsWith('mailto:')) items.push(`<a href="${esc(correo)}">${esc(correo.slice(7))}</a>`);
   if (!items.length) return '';
@@ -64,6 +67,7 @@ function convocatoria(c, hoy) {
   return '<li class="ficha__conv">'
     + `<p class="ficha__conv-titulo">${esc(c.titulo)}</p>`
     + `<p class="ficha__conv-meta">${insigniaEstado(c, hoy)} <time datetime="${esc(fecha)}">${etiqueta} el ${esc(dia)} de ${esc(mes)}</time></p>`
+    + detallesConvocatoria(c, 'ficha__conv-detalle')
     + (bases ? `<p class="ficha__conv-bases">${enlaceExterno(bases, `Ver bases<span class="solo-lector">: ${esc(c.titulo)}</span>`)}</p>` : '')
     + '</li>';
 }

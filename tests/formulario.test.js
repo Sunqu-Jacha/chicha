@@ -1,7 +1,7 @@
 import test from 'node:test'; import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  tipoDeRegistro, resolverAgenteId, armarDatos, leerBorrador, guardarBorrador, borrarBorrador, htmlFormulario,
+  tipoDeRegistro, resolverAgenteId, armarDatos, leerBorrador, guardarBorrador, borrarBorrador, htmlFormulario, mensajeExito, MSG_EXITO,
 } from '../assets/js/vistas/formulario.js';
 import { validarEnvio } from '../assets/js/validacion.js';
 import { CLAVE_BORRADOR } from '../assets/js/config.js';
@@ -148,4 +148,26 @@ test('htmlFormulario escapa nombres de agentes en el datalist', () => {
   const datos = { ...ejemplo, agentes: [{ id: 'ag-x', nombre: '"><script>1</script>', ciudad: 'X' }] };
   const h = htmlFormulario('convocatoria', datos);
   assert.ok(!h.includes('<script>'));
+});
+
+test('M-3: sugerencia no promete un correo con el resultado; agente y convocatoria sí', () => {
+  const h = htmlFormulario('sugerencia', ejemplo, ejemplo.agentes[0].id);
+  assert.ok(!/resultado de mi propuesta|avisarte del resultado/.test(h));
+  assert.ok(h.includes('no enviamos aviso del resultado'));
+  assert.ok(h.includes('Ley N.º 29733'));
+  for (const modo of ['agente', 'convocatoria']) assert.ok(htmlFormulario(modo, ejemplo).includes('resultado de mi propuesta'), modo);
+  assert.equal(mensajeExito('agente'), MSG_EXITO);
+  assert.equal(mensajeExito('convocatoria'), MSG_EXITO);
+  assert.ok(!/te escribiremos/i.test(mensajeExito('sugerencia')));
+});
+
+test('M-6: Otras redes explica que debe ser un enlace', () => {
+  const h = htmlFormulario('agente', ejemplo);
+  assert.ok(h.includes('id="ayuda-otras_redes"'));
+  assert.match(h, /id="f-otras_redes"[^>]*aria-describedby="ayuda-otras_redes err-otras_redes"/);
+});
+
+test('País se puede sugerir en un agente', () => {
+  assert.ok(htmlFormulario('sugerencia', ejemplo, ejemplo.agentes[0].id).includes('value="País"'));
+  assert.ok(!htmlFormulario('sugerencia', ejemplo, ejemplo.convocatorias[0].id).includes('value="País"'));
 });
