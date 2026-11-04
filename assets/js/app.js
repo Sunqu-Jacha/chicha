@@ -9,6 +9,7 @@ import { renderFicha } from './vistas/ficha.js';
 import { renderConvocatorias } from './vistas/convocatorias.js';
 import { renderSobre } from './vistas/sobre.js';
 import { hoyLima } from './convocatorias.js';
+import { abrirFormulario } from './vistas/formulario.js';
 
 const URL_DATOS = URL_SCRIPT || 'assets/datos-ejemplo.json';
 const TITULOS = { portada: 'Mapa de Emprendimiento', explorar: 'Explorar', internacional: 'Internacional', convocatorias: 'Convocatorias', sobre: 'Sobre Chicha', agente: 'Agente' };
@@ -281,6 +282,11 @@ export function iniciar() {
     if (e.target === dlg || e.target.closest('[data-cerrar-ficha]')) { dlg.close(); return; } // el panel llena el <dialog>: e.target === dlg es el fondo
     const sugerir = e.target.closest('[data-sugerir]');
     if (sugerir) document.dispatchEvent(new CustomEvent('chicha:anadir', { detail: { modo: 'sugerencia', registroId: sugerir.dataset.registro } }));
+  });
+  document.addEventListener('chicha:anadir', (e) => {
+    if (!estado.datos) return;
+    const { modo = 'elegir', registroId = '' } = e.detail || {};
+    abrirFormulario({ modo, registroId, datos: estado.datos });
   });
   const btnAnadir = document.getElementById('btn-anadir');
   if (btnAnadir) btnAnadir.addEventListener('click', anadir);

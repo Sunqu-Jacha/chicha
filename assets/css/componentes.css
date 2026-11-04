@@ -267,3 +267,70 @@ a.chip--activo:hover { background: var(--rojo-oscuro); border-color: var(--rojo-
   .ficha { left: auto; width: min(520px, 100%); border-left: 4px solid var(--negro); }
   .ficha__panel { padding: var(--e-5); }
 }
+
+/* Formulario de añadir / sugerir: pantalla completa en móvil, caja centrada en escritorio */
+.formulario {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  max-height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: var(--blanco);
+  color: var(--negro);
+}
+.formulario::backdrop { background: rgba(20, 20, 20, 0.6); }
+.form__panel { height: 100%; padding: var(--e-4); border-top: 10px solid var(--rojo); overflow-y: auto; overflow-wrap: anywhere; }
+.form__cerrar { display: flex; margin: 0 0 var(--e-4) auto; }
+.form__titulo { font-size: 40px; }
+.form__titulo:focus { outline: none; }
+.form__grupo { margin-top: var(--e-6); padding-bottom: var(--e-2); border-bottom: 2px solid var(--negro); font-size: 26px; }
+.form__nota, .form__sobre { color: var(--gris-texto); }
+.form__opciones { display: flex; flex-wrap: wrap; gap: var(--e-3); }
+.form__general:empty { display: none; }
+.form__general { margin-bottom: var(--e-4); padding: var(--e-3) var(--e-4); border-left: 6px solid var(--rojo-oscuro); background: var(--gris-fondo); font-weight: 500; }
+.form__acciones { margin: var(--e-6) 0 var(--e-4); }
+.form__acciones .btn { width: 100%; }
+.form__acciones .btn:disabled { opacity: 0.7; cursor: progress; }
+
+.campo { margin: 0 0 var(--e-5); padding: 0; border: 0; min-width: 0; }
+.campo[hidden] { display: none; }
+.campo__etiqueta { display: block; margin-bottom: var(--e-1); padding: 0; font-weight: 500; }
+.campo__req { color: var(--rojo-oscuro); }
+.campo__ayuda { margin: 0 0 var(--e-2); color: var(--gris-texto); font-size: 14px; }
+.campo input[type="text"], .campo input[type="email"], .campo input[type="url"], .campo input[type="date"],
+.campo select, .campo textarea {
+  display: block;
+  width: 100%;
+  min-height: var(--objetivo-tactil);
+  padding: var(--e-2) var(--e-3);
+  border: 2px solid var(--negro);
+  border-radius: 0;
+  background: var(--blanco);
+  color: var(--negro);
+  font: 400 16px/1.5 var(--fuente-texto);
+}
+.campo textarea { resize: vertical; }
+.campo--error input:not([type="checkbox"]), .campo--error select, .campo--error textarea { border-color: var(--rojo-oscuro); border-left-width: 8px; }
+.campo__error { margin: var(--e-1) 0 0; color: var(--rojo-oscuro); font-weight: 500; }
+.campo__error[hidden] { display: none; }
+.campo__cuenta { margin: var(--e-1) 0 0; color: var(--gris-texto); font-size: 14px; text-align: right; }
+.campo__cuenta--excedido { color: var(--rojo-oscuro); font-weight: 500; }
+.casillas { display: grid; grid-template-columns: 1fr; gap: var(--e-1); }
+.casilla { display: flex; align-items: center; gap: var(--e-2); min-height: var(--objetivo-tactil); cursor: pointer; }
+.casilla input { flex: none; width: 24px; height: 24px; margin: 0; accent-color: var(--rojo-oscuro); }
+.casilla--consentimiento { align-items: flex-start; padding: var(--e-2) 0; }
+.enlace-boton { min-height: var(--objetivo-tactil); padding: 0; border: 0; background: none; color: var(--negro); font: 500 16px/1.5 var(--fuente-texto); text-decoration: underline; cursor: pointer; }
+.enlace-boton:hover { color: var(--rojo-oscuro); }
+/* Campo trampa: fuera de pantalla (no display:none, que algunos bots detectan) */
+.trampa { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+
+@media (min-width: 768px) {
+  .formulario { inset: 0; width: min(680px, 100%); height: fit-content; max-height: 92vh; margin: auto; border: 4px solid var(--negro); }
+  .form__panel { max-height: 92vh; padding: var(--e-5); }
+  .casillas { grid-template-columns: 1fr 1fr; }
+  .form__acciones .btn { width: auto; }
+}
