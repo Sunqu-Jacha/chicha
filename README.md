@@ -47,3 +47,7 @@ Hazlo en una **hoja de ensayo** (no la real), con la cuenta sunqujacha@gmail.com
     - [ ] Llega **1** correo "[Chicha] Revisa la estructura de la hoja" (no uno por consulta).
     - [ ] Restaura el nombre `ciudad`.
 12. Recordatorio anual: en el editor ejecuta `recordatorioAnual`. Este año no envía nada, porque `instalarDisparadores` marca el año en curso si ya pasó el 5 de enero; solo despacha la cola `_cola` si tiene filas. El primer recordatorio sale el próximo 5 de enero (o el primer día siguiente en que el disparador corra).
+
+## Créditos
+
+Los íconos provienen de [Tabler Icons](https://tabler.io/icons) (licencia MIT), set outline v3.19.0.

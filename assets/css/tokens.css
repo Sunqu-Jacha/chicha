@@ -1,0 +1,86 @@
+:root {
+  /* Marca */
+  --rojo: #C8232C;
+  --rojo-oscuro: #A81C24; /* hover del botón primario; blanco sobre él 7.1:1 aprox. */
+  --negro: #141414;
+  --blanco: #FFFFFF;
+  --gris-texto: #4A4A4A;   /* sobre blanco 8.9:1 */
+  --gris-linea: #D9D9D9;
+  --gris-fondo: #F5F3F0;
+
+  /* Franja awayo */
+  --awayo-1: #C8232C;
+  --awayo-2: #F28C28;
+  --awayo-3: #F6C700;
+  --awayo-4: #1E9E5A;
+  --awayo-5: #1F6FB2;
+  --awayo-6: #6B3FA0;
+  --awayo-7: #D6246E;
+  --awayo-8: #141414;
+
+  /* Tipografía */
+  --fuente-titulo: 'Bebas Neue', 'Oswald', Impact, sans-serif;
+  --fuente-texto: 'Work Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  /* Escala de espacios */
+  --e-1: 4px;
+  --e-2: 8px;
+  --e-3: 12px;
+  --e-4: 16px;
+  --e-5: 24px;
+  --e-6: 32px;
+  --e-7: 48px;
+  --e-8: 64px;
+
+  --objetivo-tactil: 44px;
+  --ancho-max: 1200px;
+  --transicion: 150ms ease;
+
+  /* Sectores: --sector-<slug> (tono base, para franjas), -claro (fondo de etiqueta),
+     -oscuro (texto de etiqueta). Razón = contraste WCAG de oscuro sobre claro;
+     entre paréntesis, negro #141414 sobre claro. Todas >= 4.5:1. */
+  /* artes-visuales: #A72058 sobre #F9DEE9 = 5.57:1 (negro 14.61:1) */
+  --sector-artes-visuales: #D6246E;
+  --sector-artes-visuales-claro: #F9DEE9;
+  --sector-artes-visuales-oscuro: #A72058;
+  /* artes-escenicas: #AB2128 sobre #F7DEDF = 5.53:1 (negro 14.45:1) */
+  --sector-artes-escenicas: #C8232C;
+  --sector-artes-escenicas-claro: #F7DEDF;
+  --sector-artes-escenicas-oscuro: #AB2128;
+  /* musica: #87521E sobre #FDEEDF = 5.67:1 (negro 16.20:1) */
+  --sector-musica: #F28C28;
+  --sector-musica-claro: #FDEEDF;
+  --sector-musica-oscuro: #87521E;
+  /* audiovisual: #6B3FA0 sobre #E9E2F1 = 5.84:1 (negro 14.57:1) */
+  --sector-audiovisual: #6B3FA0;
+  --sector-audiovisual-claro: #E9E2F1;
+  --sector-audiovisual-oscuro: #6B3FA0;
+  /* editorial-y-literatura: #1D5D92 sobre #DDE9F3 = 5.61:1 (negro 14.93:1) */
+  --sector-editorial-y-literatura: #1F6FB2;
+  --sector-editorial-y-literatura-claro: #DDE9F3;
+  --sector-editorial-y-literatura-oscuro: #1D5D92;
+  /* diseno-y-moda: #97432D sobre #FCE7E2 = 5.60:1 (negro 15.50:1) */
+  --sector-diseno-y-moda: #E8603C;
+  --sector-diseno-y-moda-claro: #FCE7E2;
+  --sector-diseno-y-moda-oscuro: #97432D;
+  /* patrimonio: #844E29 sobre #F0E6E0 = 5.51:1 (negro 15.00:1) */
+  --sector-patrimonio: #9C5B2E;
+  --sector-patrimonio-claro: #F0E6E0;
+  --sector-patrimonio-oscuro: #844E29;
+  /* artesania: #765C0C sobre #F7F0DA = 5.57:1 (negro 16.17:1) */
+  --sector-artesania: #C99A06;
+  --sector-artesania-claro: #F7F0DA;
+  --sector-artesania-oscuro: #765C0C;
+  /* educacion: #1A6A3F sobre #DDF0E6 = 5.56:1 (negro 15.51:1) */
+  --sector-educacion: #1E9E5A;
+  --sector-educacion-claro: #DDF0E6;
+  --sector-educacion-oscuro: #1A6A3F;
+  /* emprendimiento-e-innovacion: #735F0C sobre #FEF7D9 = 5.79:1 (negro 17.12:1) */
+  --sector-emprendimiento-e-innovacion: #F6C700;
+  --sector-emprendimiento-e-innovacion-claro: #FEF7D9;
+  --sector-emprendimiento-e-innovacion-oscuro: #735F0C;
+  /* cultura-comunitaria: #106666 sobre #DBEEEE = 5.61:1 (negro 15.33:1) */
+  --sector-cultura-comunitaria: #0E8C8C;
+  --sector-cultura-comunitaria-claro: #DBEEEE;
+  --sector-cultura-comunitaria-oscuro: #106666;
+}
