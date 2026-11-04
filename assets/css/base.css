@@ -31,7 +31,6 @@ p { margin: 0 0 var(--e-4); }
 :focus-visible {
   outline: 3px solid var(--negro);
   outline-offset: 2px;
-  box-shadow: 0 0 0 5px var(--blanco);
 }
 #vista:focus { outline: none; }
 
@@ -161,6 +160,7 @@ p { margin: 0 0 var(--e-4); }
 
 /* Móvil: botón Añadir flotante */
 @media (max-width: 767px) {
+  html { scroll-padding-bottom: 88px; }
   #btn-anadir {
     position: fixed;
     right: var(--e-4);

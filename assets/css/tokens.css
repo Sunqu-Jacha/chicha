@@ -1,7 +1,7 @@
 :root {
   /* Marca */
   --rojo: #C8232C;
-  --rojo-oscuro: #A81C24; /* hover del botón primario; blanco sobre él 7.1:1 aprox. */
+  --rojo-oscuro: #A81C24; /* hover del botón primario; blanco sobre él 7.35:1 */
   --negro: #141414;
   --blanco: #FFFFFF;
   --gris-texto: #4A4A4A;   /* sobre blanco 8.9:1 */
