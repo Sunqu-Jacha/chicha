@@ -1,0 +1,147 @@
+{
+  "generado": "2026-11-04T15:00:00Z",
+  "listas": {
+    "ofrece": ["Financiamiento y fondos", "Formación", "Incubación y mentoría", "Espacios y equipamiento", "Difusión y circulación", "Redes y contactos", "Convocatorias y premios", "Asesoría legal o técnica"],
+    "sectores": ["Artes visuales", "Artes escénicas", "Música", "Audiovisual", "Editorial y literatura", "Diseño y moda", "Patrimonio", "Artesanía", "Educación", "Emprendimiento e innovación", "Cultura comunitaria"],
+    "tiposEntidad": ["Pública", "Privada / empresa / marca", "Universidad o instituto", "Centro cultural", "Fundación / ONG", "Cooperación internacional / embajada", "Incubadora / aceleradora", "Colectivo / red", "Espacio público"],
+    "presencia": ["Peruana", "Extranjera con sede en el Perú", "Internacional"],
+    "departamentos": ["Amazonas", "Áncash", "Apurímac", "Arequipa", "Ayacucho", "Cajamarca", "Cusco", "Huancavelica", "Huánuco", "Ica", "Junín", "La Libertad", "Lambayeque", "Lima", "Loreto", "Madre de Dios", "Moquegua", "Pasco", "Piura", "Puno", "San Martín", "Tacna", "Tumbes", "Ucayali", "Provincia Constitucional del Callao"],
+    "tiposConvocatoria": ["fondo", "premio", "beca", "residencia", "formación", "concurso", "otro"]
+  },
+  "agentes": [
+    {
+      "id": "ag-ej01", "capa": "Perú", "nombre": "Centro Cultural Ejemplo Qosqo",
+      "descripcion": "Casa cultural de ejemplo en el centro histórico: salas de ensayo, talleres de danza y música andina, y una temporada anual de funciones para elencos emergentes.",
+      "ofrece": ["Espacios y equipamiento", "Formación", "Difusión y circulación"], "sectores": ["Artes escénicas", "Música"],
+      "tipoEntidad": "Centro cultural", "presencia": "Peruana", "pais": "Perú", "departamento": "Cusco", "ciudad": "Cusco", "direccion": "Calle Ejemplo 123",
+      "lat": null, "lng": null, "web": "https://example.org/qosqo", "instagram": "", "facebook": "", "otrasRedes": "", "emailPublico": "contacto@example.org",
+      "logoUrl": "", "verificado": true, "fechaAprobacion": "2026-03-12"
+    },
+    {
+      "id": "ag-ej02", "capa": "Perú", "nombre": "Incubadora Creativa Ejemplo Lima",
+      "descripcion": "Programa de ejemplo que acompaña durante seis meses a emprendimientos de diseño y moda con mentorías, asesoría legal y contactos con compradores.",
+      "ofrece": ["Incubación y mentoría", "Redes y contactos", "Asesoría legal o técnica"], "sectores": ["Emprendimiento e innovación", "Diseño y moda"],
+      "tipoEntidad": "Incubadora / aceleradora", "presencia": "Peruana", "pais": "Perú", "departamento": "Lima", "ciudad": "Miraflores", "direccion": "",
+      "lat": null, "lng": null, "web": "https://example.org/incubadora", "instagram": "", "facebook": "", "otrasRedes": "", "emailPublico": "",
+      "logoUrl": "", "verificado": true, "fechaAprobacion": "2026-09-20"
+    },
+    {
+      "id": "ag-ej03", "capa": "Perú", "nombre": "Fondo Regional de Cultura Ejemplo Arequipa",
+      "descripcion": "Fondo público de ejemplo que financia proyectos de patrimonio, artes visuales y cultura comunitaria en la región, con un concurso anual.",
+      "ofrece": ["Financiamiento y fondos", "Convocatorias y premios"], "sectores": ["Patrimonio", "Artes visuales", "Cultura comunitaria"],
+      "tipoEntidad": "Pública", "presencia": "Peruana", "pais": "Perú", "departamento": "Arequipa", "ciudad": "Arequipa", "direccion": "",
+      "lat": null, "lng": null, "web": "https://example.org/fondo-arequipa", "instagram": "", "facebook": "", "otrasRedes": "", "emailPublico": "",
+      "logoUrl": "", "verificado": true, "fechaAprobacion": "2026-05-02"
+    },
+    {
+      "id": "ag-ej04", "capa": "Perú", "nombre": "Colectivo Audiovisual Ejemplo Amazónico",
+      "descripcion": "Colectivo de ejemplo que forma a jóvenes en documental y lleva muestras itinerantes de cine a comunidades ribereñas.",
+      "ofrece": ["Formación", "Difusión y circulación"], "sectores": ["Audiovisual", "Cultura comunitaria"],
+      "tipoEntidad": "Colectivo / red", "presencia": "Peruana", "pais": "Perú", "departamento": "Loreto", "ciudad": "Iquitos", "direccion": "",
+      "lat": null, "lng": null, "web": "", "instagram": "https://example.org/ig-colectivo", "facebook": "", "otrasRedes": "", "emailPublico": "",
+      "logoUrl": "", "verificado": false, "fechaAprobacion": "2026-10-28"
+    },
+    {
+      "id": "ag-ej05", "capa": "Perú", "nombre": "Universidad Ejemplo del Altiplano",
+      "descripcion": "Universidad de ejemplo con diplomados abiertos en gestión cultural, música y artesanía textil, y un laboratorio de grabación de uso libre.",
+      "ofrece": ["Formación", "Espacios y equipamiento"], "sectores": ["Educación", "Música", "Artesanía"],
+      "tipoEntidad": "Universidad o instituto", "presencia": "Peruana", "pais": "Perú", "departamento": "Puno", "ciudad": "Puno", "direccion": "",
+      "lat": null, "lng": null, "web": "https://example.org/altiplano", "instagram": "", "facebook": "", "otrasRedes": "", "emailPublico": "",
+      "logoUrl": "", "verificado": false, "fechaAprobacion": "2026-01-15"
+    },
+    {
+      "id": "ag-ej06", "capa": "Perú", "nombre": "Fundación Ejemplo Tejidos del Sur",
+      "descripcion": "Fundación de ejemplo que entrega capital semilla e incubación a talleres artesanales liderados por mujeres.",
+      "ofrece": ["Financiamiento y fondos", "Incubación y mentoría"], "sectores": ["Artesanía", "Diseño y moda"],
+      "tipoEntidad": "Fundación / ONG", "presencia": "Peruana", "pais": "Perú", "departamento": "Ayacucho", "ciudad": "Huamanga", "direccion": "",
+      "lat": null, "lng": null, "web": "https://example.org/tejidos", "instagram": "", "facebook": "", "otrasRedes": "", "emailPublico": "hola@example.org",
+      "logoUrl": "", "verificado": true, "fechaAprobacion": "2026-07-08"
+    },
+    {
+      "id": "ag-ej07", "capa": "Perú", "nombre": "Editorial Ejemplo Trujillo Lee",
+      "descripcion": "Sello editorial de ejemplo que publica a nuevas voces del norte, organiza un premio de cuento y distribuye en ferias del libro.",
+      "ofrece": ["Difusión y circulación", "Convocatorias y premios"], "sectores": ["Editorial y literatura"],
+      "tipoEntidad": "Privada / empresa / marca", "presencia": "Peruana", "pais": "Perú", "departamento": "La Libertad", "ciudad": "Trujillo", "direccion": "",
+      "lat": null, "lng": null, "web": "https://example.org/trujillo-lee", "instagram": "", "facebook": "", "otrasRedes": "", "emailPublico": "",
+      "logoUrl": "", "verificado": false, "fechaAprobacion": "2026-08-30"
+    },
+    {
+      "id": "ag-ej08", "capa": "Perú", "nombre": "Casa de la Cultura Ejemplo Chiclayo",
+      "descripcion": "Espacio municipal de ejemplo con sala de exposiciones, biblioteca y talleres gratuitos sobre patrimonio mochica.",
+      "ofrece": ["Espacios y equipamiento", "Formación"], "sectores": ["Patrimonio", "Artes visuales"],
+      "tipoEntidad": "Espacio público", "presencia": "Peruana", "pais": "Perú", "departamento": "Lambayeque", "ciudad": "Chiclayo", "direccion": "",
+      "lat": null, "lng": null, "web": "", "instagram": "", "facebook": "https://example.org/fb-chiclayo", "otrasRedes": "", "emailPublico": "",
+      "logoUrl": "", "verificado": false, "fechaAprobacion": "2026-04-19"
+    },
+    {
+      "id": "ag-ej09", "capa": "Perú", "nombre": "Instituto Cultural Ejemplo Europa-Perú",
+      "descripcion": "Instituto de cooperación de ejemplo con sede en Lima: becas de movilidad, coproducciones y una red de contactos con festivales.",
+      "ofrece": ["Financiamiento y fondos", "Convocatorias y premios", "Redes y contactos"], "sectores": ["Artes visuales", "Música", "Audiovisual"],
+      "tipoEntidad": "Cooperación internacional / embajada", "presencia": "Extranjera con sede en el Perú", "pais": "Perú", "departamento": "Lima", "ciudad": "San Isidro", "direccion": "",
+      "lat": null, "lng": null, "web": "https://example.org/instituto", "instagram": "", "facebook": "", "otrasRedes": "", "emailPublico": "",
+      "logoUrl": "", "verificado": true, "fechaAprobacion": "2026-10-05"
+    },
+    {
+      "id": "ag-ej10", "capa": "Perú", "nombre": "Red Ejemplo de Gestores Culturales de Junín",
+      "descripcion": "Red de ejemplo que conecta a gestores de la sierra central y ofrece asesoría para formalizar asociaciones culturales.",
+      "ofrece": ["Redes y contactos", "Asesoría legal o técnica"], "sectores": ["Cultura comunitaria", "Educación"],
+      "tipoEntidad": "Colectivo / red", "presencia": "Peruana", "pais": "Perú", "departamento": "Junín", "ciudad": "Huancayo", "direccion": "",
+      "lat": null, "lng": null, "web": "", "instagram": "", "facebook": "", "otrasRedes": "", "emailPublico": "",
+      "logoUrl": "", "verificado": false, "fechaAprobacion": ""
+    },
+    {
+      "id": "ag-ej11", "capa": "Internacional", "nombre": "Fondo Creativo Andino (ejemplo)",
+      "descripcion": "Fondo regional de ejemplo para proyectos de música, artes escénicas y audiovisual de los países andinos, con postulación en línea.",
+      "ofrece": ["Financiamiento y fondos", "Convocatorias y premios"], "sectores": ["Música", "Artes escénicas", "Audiovisual"],
+      "tipoEntidad": "Fundación / ONG", "presencia": "Internacional", "pais": "Colombia", "departamento": "", "ciudad": "Bogotá", "direccion": "",
+      "lat": null, "lng": null, "web": "https://example.org/fondo-andino", "instagram": "", "facebook": "", "otrasRedes": "", "emailPublico": "",
+      "logoUrl": "", "verificado": true, "fechaAprobacion": "2026-06-14"
+    },
+    {
+      "id": "ag-ej12", "capa": "Internacional", "nombre": "Residencias Ejemplo Sur Global",
+      "descripcion": "Programa de ejemplo de residencias de dos meses para artistas visuales y escritores de América Latina, con taller y red de mentores.",
+      "ofrece": ["Espacios y equipamiento", "Formación", "Redes y contactos"], "sectores": ["Artes visuales", "Editorial y literatura"],
+      "tipoEntidad": "Centro cultural", "presencia": "Internacional", "pais": "España", "departamento": "", "ciudad": "Barcelona", "direccion": "",
+      "lat": null, "lng": null, "web": "https://example.org/residencias", "instagram": "", "facebook": "", "otrasRedes": "", "emailPublico": "",
+      "logoUrl": "", "verificado": false, "fechaAprobacion": "2026-02-27"
+    }
+  ],
+  "convocatorias": [
+    {
+      "id": "cv-ej01", "agenteId": "ag-ej03", "titulo": "Concurso de proyectos culturales Arequipa 2026 (ejemplo)", "anio": 2026, "tipo": "fondo",
+      "ofrece": ["Financiamiento y fondos"], "sectores": ["Patrimonio", "Cultura comunitaria"],
+      "descripcion": "Fondos de ejemplo para proyectos de puesta en valor del patrimonio y cultura comunitaria.", "monto": "Hasta S/ 30 000 por proyecto",
+      "enlaceBases": "https://example.org/bases-arequipa", "fechaApertura": "2026-10-01", "fechaCierre": "2026-11-13", "fechaResultados": "2026-12-15"
+    },
+    {
+      "id": "cv-ej02", "agenteId": "ag-ej07", "titulo": "Premio de cuento Trujillo Lee 2026 (ejemplo)", "anio": 2026, "tipo": "premio",
+      "ofrece": ["Convocatorias y premios"], "sectores": ["Editorial y literatura"],
+      "descripcion": "Premio de ejemplo para cuentos inéditos de autoras y autores del norte del Perú.", "monto": "S/ 5 000 y publicación",
+      "enlaceBases": "https://example.org/bases-cuento", "fechaApertura": "2026-10-15", "fechaCierre": "2026-12-15", "fechaResultados": null
+    },
+    {
+      "id": "cv-ej03", "agenteId": "ag-ej06", "titulo": "Capital semilla para talleres artesanales 2026 (ejemplo)", "anio": 2026, "tipo": "fondo",
+      "ofrece": ["Financiamiento y fondos", "Incubación y mentoría"], "sectores": ["Artesanía"],
+      "descripcion": "Convocatoria de ejemplo ya cerrada.", "monto": "S/ 8 000",
+      "enlaceBases": "https://example.org/bases-semilla", "fechaApertura": "2026-05-01", "fechaCierre": "2026-06-30", "fechaResultados": "2026-08-01"
+    },
+    {
+      "id": "cv-ej04", "agenteId": "ag-ej11", "titulo": "Fondo Creativo Andino 2026 (ejemplo)", "anio": 2026, "tipo": "fondo",
+      "ofrece": ["Financiamiento y fondos"], "sectores": ["Música", "Artes escénicas", "Audiovisual"],
+      "descripcion": "Fondo internacional de ejemplo abierto a postulantes desde el Perú.", "monto": "Hasta USD 10 000",
+      "enlaceBases": "https://example.org/bases-andino", "fechaApertura": null, "fechaCierre": "2026-12-31", "fechaResultados": null
+    },
+    {
+      "id": "cv-ej05", "agenteId": "ag-ej12", "titulo": "Residencias Sur Global 2027 (ejemplo)", "anio": 2027, "tipo": "residencia",
+      "ofrece": ["Espacios y equipamiento", "Formación"], "sectores": ["Artes visuales", "Editorial y literatura"],
+      "descripcion": "Residencia de ejemplo de dos meses con alojamiento y taller.", "monto": "Alojamiento y estipendio",
+      "enlaceBases": "https://example.org/bases-residencias", "fechaApertura": "2027-01-10", "fechaCierre": "2027-02-28", "fechaResultados": "2027-04-01"
+    },
+    {
+      "id": "cv-ej06", "agenteId": "ag-ej09", "titulo": "Becas de movilidad artística 2027 (ejemplo)", "anio": 2027, "tipo": "beca",
+      "ofrece": ["Financiamiento y fondos", "Redes y contactos"], "sectores": ["Artes visuales", "Música", "Audiovisual"],
+      "descripcion": "Becas de ejemplo para participar en festivales y ferias en el extranjero.", "monto": "Pasajes y viáticos",
+      "enlaceBases": "https://example.org/bases-movilidad", "fechaApertura": "2027-02-01", "fechaCierre": "2027-03-14", "fechaResultados": null
+    }
+  ]
+}
