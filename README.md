@@ -15,7 +15,12 @@ Chicha es un directorio público y filtrable de agentes y convocatorias para el 
 3. Ejecuta `crearEstructura` y acepta los permisos. Crea las pestañas, validaciones, listas y datos de ejemplo.
 4. Ejecuta `instalarDisparadores` (crea `alEditar` y `recordatorioAnual`).
 5. **Implementar › Nueva implementación › Aplicación web**: ejecutar como "yo", acceso "cualquier usuario". Copia la URL que termina en `/exec`.
-6. Pégala en `assets/js/config.js` como valor de `URL_SCRIPT`, haz commit y publica.
+6. Pégala en `assets/js/config.js` como valor de `URL_SCRIPT`, estando en la rama `main` (ver "Publicar en GitHub Pages"), y publica:
+   ```
+   git add assets/js/config.js
+   git commit -m "config: URL del script"
+   git push
+   ```
 7. Antes de dar por buena la hoja real, repite la checklist de la sección siguiente en una hoja de ensayo.
 
 ## Probar el script
@@ -68,14 +73,25 @@ Hazlo en una **hoja de ensayo** (no la real), con la cuenta sunqujacha@gmail.com
 
 ## Publicar en GitHub Pages
 
-1. Crea la organización **sunqujacha** en GitHub (o usa una existente) y, dentro, un repositorio público llamado **chicha**.
-2. Conecta este repositorio y sube la rama principal:
+1. El trabajo vive en la rama `feat/chicha-v1`. Antes de publicar, intégralo en `main`:
+   ```
+   git switch main
+   git merge feat/chicha-v1
+   ```
+   Todo lo que publiques después (incluida la URL del script en `config.js`) debe estar commiteado en `main`.
+2. Crea la organización **sunqujacha** en GitHub (o usa una existente) y, dentro, un repositorio público llamado **chicha**.
+3. Conecta este repositorio y sube la rama principal:
    ```
    git remote add origin https://github.com/sunqujacha/chicha.git
    git push -u origin main
    ```
-3. En el repositorio: **Settings › Pages › Build and deployment**: fuente **Deploy from a branch**, rama `main`, carpeta `/ (root)`.
-4. El sitio queda en `https://sunqujacha.github.io/chicha/`. Esa URL ya está en `index.html` (`og:url`, `og:image`, canonical), `sitemap.xml` y `robots.txt`; si cambia, actualízala en los tres.
+4. En el repositorio: **Settings › Pages › Build and deployment**: fuente **Deploy from a branch**, rama `main`, carpeta `/ (root)`.
+5. El sitio queda en `https://sunqujacha.github.io/chicha/`. Esa URL ya está en `index.html` (`og:url`, `og:image`, canonical), `sitemap.xml` y `robots.txt`; si cambia, actualízala en los tres.
+
+## Actualizar después
+
+- **Script:** editar el código en Apps Script no cambia la URL `/exec` publicada. Tras cada cambio: **Implementar › Gestionar implementaciones › editar (lápiz) › Versión: Nueva versión › Implementar**. Si no, la URL sigue sirviendo el código viejo.
+- **Sitio:** haz commit en `main` y `git push`; GitHub Pages lo publica en uno o dos minutos.
 
 ## Moderar
 

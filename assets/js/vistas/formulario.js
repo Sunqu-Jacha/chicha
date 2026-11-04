@@ -4,6 +4,7 @@ import { validarEnvio, esInternacional, MAX_DESCRIPCION } from '../validacion.js
 import { iconoDe } from './comunes.js';
 
 export const MSG_RED = 'No pudimos enviar tu propuesta. Tu texto sigue guardado; intenta de nuevo.';
+export const MSG_TIEMPO = MSG_RED + ' Revisa tu correo antes de reenviar: si recibiste el acuse, tu propuesta ya llegó.';
 export const MSG_SIN_SCRIPT = 'El formulario aún no está conectado.';
 export const MSG_EXITO = 'Recibimos tu propuesta. Te escribiremos cuando la revisemos.';
 const MSG_REGISTRO = 'No pudimos identificar qué registro quieres corregir. Cierra esta ventana y vuelve a intentarlo.';
@@ -418,6 +419,7 @@ export function abrirFormulario({ modo = 'elegir', datos, registroId = '' } = {}
     boton.textContent = 'Enviando…';
     form.setAttribute('aria-busy', 'true');
     let respuesta = null;
+    let agotado = false;
     try {
       const falta = ESPERA_MINIMA_MS - (Date.now() - t0);
       if (falta > 0) await esperar(falta);
@@ -425,10 +427,10 @@ export function abrirFormulario({ modo = 'elegir', datos, registroId = '' } = {}
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({ tipo: modoEnvio, datos: d, t0 }),
-        signal: AbortSignal.timeout(TIEMPO_ENVIO_MS),
+        ...(typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? { signal: AbortSignal.timeout(TIEMPO_ENVIO_MS) } : {}),
       });
       respuesta = await r.json();
-    } catch { respuesta = null; }
+    } catch (err) { respuesta = null; agotado = !!err && (err.name === 'TimeoutError' || err.name === 'AbortError'); }
     estado.enviando = false;
 
     if (respuesta && respuesta.ok === true) {
@@ -442,7 +444,7 @@ export function abrirFormulario({ modo = 'elegir', datos, registroId = '' } = {}
     form.removeAttribute('aria-busy');
     const errs = respuesta && respuesta.ok === false && respuesta.errores && typeof respuesta.errores === 'object' ? respuesta.errores : null;
     if (!errs || !Object.keys(errs).length) {
-      general.textContent = MSG_RED;
+      general.textContent = agotado ? MSG_TIEMPO : MSG_RED;
       general.scrollIntoView({ block: 'nearest' });
       return;
     }

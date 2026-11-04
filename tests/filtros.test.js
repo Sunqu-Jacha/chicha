@@ -40,4 +40,6 @@ test('AND entre los cinco grupos a la vez', () => {
   assert.deepEqual(ids(filtrarAgentes(todos, { ...c, tipos: ['colectivo'] })), []);
   assert.deepEqual(ids(filtrarAgentes(todos, { ...c, presencia: ['local'] })), []);
   assert.deepEqual(ids(filtrarAgentes(todos, { ...c, sectores: ['patrimonio'] })), []);
+  assert.deepEqual(ids(filtrarAgentes(todos, { ...c, departamentos: ['cusco'] })), []);
+  assert.deepEqual(ids(filtrarAgentes(todos, { ...c, ofrece: ['formacion'] })), []);
 });

@@ -79,3 +79,12 @@ test('fetch que nunca responde: el tiempo límite cae a la copia local', async (
   const r2 = await cargarDatos({ url: 'https://x/exec', fetchFn: colgado, almacen: almacenFalso(), tiempoLimiteMs: 30 });
   assert.equal(r2.origen, 'ninguno');
 });
+
+test('sin AbortSignal.timeout (navegadores viejos) la carga sigue funcionando sin signal', async () => {
+  const original = AbortSignal.timeout; let opciones;
+  try {
+    AbortSignal.timeout = undefined;
+    const r = await cargarDatos({ url: 'https://x/exec', fetchFn: async (u, o) => { opciones = o; return { ok: true, json: async () => D('n') }; }, almacen: almacenFalso() });
+    assert.equal(r.origen, 'red'); assert.equal(opciones.signal, undefined);
+  } finally { AbortSignal.timeout = original; }
+});
