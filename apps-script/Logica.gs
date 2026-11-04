@@ -10,7 +10,8 @@ var COLUMNAS_AGENTES = [
   'ofrece', 'sectores', 'tipo_entidad', 'presencia',
   'pais', 'departamento', 'ciudad', 'direccion', 'lat', 'lng',
   'web', 'instagram', 'facebook', 'otras_redes', 'email_publico',
-  'nombre_proponente', 'email_proponente', 'notas_moderacion', 'motivo_rechazo'
+  'nombre_proponente', 'email_proponente', 'notas_moderacion', 'motivo_rechazo',
+  'aviso_enviado'
 ];
 
 var COLUMNAS_CONVOCATORIAS = [
@@ -18,7 +19,8 @@ var COLUMNAS_CONVOCATORIAS = [
   'agente_id',
   'titulo', 'año', 'tipo', 'ofrece', 'sectores', 'descripcion', 'monto', 'enlace_bases',
   'fecha_apertura', 'fecha_cierre', 'fecha_resultados',
-  'nombre_proponente', 'email_proponente', 'notas_moderacion', 'motivo_rechazo'
+  'nombre_proponente', 'email_proponente', 'notas_moderacion', 'motivo_rechazo',
+  'aviso_enviado'
 ];
 
 var COLUMNAS_SUGERENCIAS = [
@@ -26,7 +28,7 @@ var COLUMNAS_SUGERENCIAS = [
   'email_proponente', 'notas_moderacion'
 ];
 
-// Lista blanca: todo salvo control interno (estado, origen, fecha_envio) y columnas privadas.
+// Lista blanca: todo salvo control interno (estado, origen, fecha_envio, aviso_enviado) y columnas privadas.
 // En convocatorias tampoco sale fecha_aprobacion (el JSON público del spec §7.1 no la incluye).
 var PUBLICAS_AGENTES = [
   'id', 'capa', 'verificado', 'fecha_aprobacion',
@@ -53,6 +55,11 @@ function separarMulti(v) {
   if (v === null || v === undefined) return [];
   var partes = Array.isArray(v) ? v : String(v).split(';');
   return partes.map(function (p) { return String(p).trim(); }).filter(Boolean);
+}
+
+// Presencia "Internacional" (sin sede en el Perú): capa Internacional, sin departamento.
+function esInternacional(presencia) {
+  return typeof presencia === 'string' && presencia.trim() === 'Internacional';
 }
 
 function fechaIso(v) {
@@ -193,7 +200,7 @@ function validarEnvio(tipo, d, listas, idsAprobados) {
     opcionUnica('tipo_entidad', listas.tiposEntidad, true);
     opcionUnica('presencia', listas.presencia, true);
     // Las entidades internacionales no tienen departamento del Perú.
-    var internacional = typeof d.presencia === 'string' && d.presencia.indexOf('Internacional') === 0;
+    var internacional = esInternacional(d.presencia);
     opcionUnica('departamento', listas.departamentos, !internacional);
     texto('ciudad', true);
     texto('pais', false);

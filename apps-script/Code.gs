@@ -8,7 +8,9 @@ var URL_SITIO = 'https://sunqujacha.github.io/chicha/';
 
 var CLAVE_CACHE = 'datos';
 var SEGUNDOS_CACHE = 600;
+var TROZO_CACHE_CHARS = 30000;          // ≤ 90 KB por valor de caché (límite 100 KB) aun con caracteres de 3 bytes
 var PROP_ULTIMA = 'ultima_';            // ultima_n = número de trozos; ultima_0, ultima_1, … = JSON troceado
+var PROP_ULTIMA_HUELLA = 'ultima_huella';
 var TROZO_CHARS = 3000;                 // ≤ 9 KB por propiedad aun con caracteres de 3 bytes
 var MAX_BYTES_PROPIEDADES = 400000;     // margen bajo el total de 500 KB del almacén de propiedades
 var PROP_AVISO_ESTRUCTURA = 'aviso_estructura_ms';
@@ -19,7 +21,9 @@ var CUOTA_MINIMA = 5;
 var ESPERA_LOCK_MS = 10000;
 
 var COLUMNAS_LISTAS = ['ofrece', 'sectores', 'tipos_entidad', 'presencia', 'departamentos', 'tipos_convocatoria'];
-var COLUMNAS_COLA = ['fecha', 'destinatario', 'asunto', 'cuerpo'];
+var COLUMNAS_COLA = ['fecha', 'destinatario', 'asunto', 'cuerpo', 'intentos'];
+var MAX_INTENTOS_COLA = 3;
+var MAX_LOTE_COLA = 50;
 
 var HOJAS = {
   agente: { nombre: 'Agentes', columnas: COLUMNAS_AGENTES, prefijo: 'ag' },
@@ -108,8 +112,7 @@ function doGet(e) {
   var accion = e && e.parameter ? e.parameter.accion : '';
   if (accion !== 'datos') return json({ ok: false, error: 'Acción desconocida.' });
 
-  var cache = CacheService.getScriptCache();
-  var enCache = cache.get(CLAVE_CACHE);
+  var enCache = leerCache();
   if (enCache) return jsonCrudo(enCache);
 
   try {
@@ -125,15 +128,22 @@ function doGet(e) {
       avisarEstructura(faltan);
       return servirUltimaValida();
     }
-    var datos = {
-      generado: new Date().toISOString(),
+    var contenido = {
       listas: leerListas(tablaListas),
       agentes: publicar(agentes.registros, PUBLICAS_AGENTES),
       convocatorias: publicar(convocatorias.registros, PUBLICAS_CONVOCATORIAS)
     };
-    var texto = JSON.stringify(datos);
-    try { cache.put(CLAVE_CACHE, texto, SEGUNDOS_CACHE); } catch (errCache) { /* > 100 KB: se sirve sin caché */ }
-    guardarUltimaValida(texto);
+    // La huella se calcula sin `generado`, que cambia en cada lectura.
+    var huella = Utilities.base64Encode(Utilities.computeDigest(
+      Utilities.DigestAlgorithm.SHA_256, JSON.stringify(contenido), Utilities.Charset.UTF_8));
+    var texto = JSON.stringify({
+      generado: new Date().toISOString(),
+      listas: contenido.listas,
+      agentes: contenido.agentes,
+      convocatorias: contenido.convocatorias
+    });
+    guardarCache(texto);
+    guardarUltimaValida(texto, huella);
     return jsonCrudo(texto);
   } catch (err) {
     console.error('doGet: ' + err);
@@ -141,17 +151,50 @@ function doGet(e) {
   }
 }
 
+// Caché troceada: CLAVE_CACHE guarda el número de trozos y CLAVE_CACHE_0, _1, … el JSON.
+// Borrar CLAVE_CACHE (alEditar) basta para invalidarla.
+function guardarCache(texto) {
+  var trozos = {};
+  var n = 0;
+  for (var i = 0; i < texto.length; i += TROZO_CACHE_CHARS) {
+    trozos[CLAVE_CACHE + '_' + n] = texto.slice(i, i + TROZO_CACHE_CHARS);
+    n++;
+  }
+  trozos[CLAVE_CACHE] = String(n);
+  try {
+    CacheService.getScriptCache().putAll(trozos, SEGUNDOS_CACHE);
+  } catch (err) {
+    console.error('caché: ' + err);
+  }
+}
+
+function leerCache() {
+  var cache = CacheService.getScriptCache();
+  var n = Number(cache.get(CLAVE_CACHE)) || 0;
+  if (!n) return null;
+  var claves = [];
+  for (var i = 0; i < n; i++) claves.push(CLAVE_CACHE + '_' + i);
+  var trozos = cache.getAll(claves);
+  var partes = [];
+  for (var j = 0; j < n; j++) {
+    if (typeof trozos[claves[j]] !== 'string') return null; // algún trozo expiró: se regenera
+    partes.push(trozos[claves[j]]);
+  }
+  return partes.join('');
+}
+
 function servirUltimaValida() {
   var texto = leerUltimaValida();
   return texto ? jsonCrudo(texto) : json({ ok: false, error: 'Datos no disponibles por ahora.' });
 }
 
-function guardarUltimaValida(texto) {
+function guardarUltimaValida(texto, huella) {
+  var props = PropertiesService.getScriptProperties();
+  if (props.getProperty(PROP_ULTIMA_HUELLA) === huella) return; // mismo contenido: no se reescribe
   if (Utilities.newBlob(texto).getBytes().length > MAX_BYTES_PROPIEDADES) return; // demasiado grande: solo caché
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(ESPERA_LOCK_MS)) return;
   try {
-    var props = PropertiesService.getScriptProperties();
     var anterior = Number(props.getProperty(PROP_ULTIMA + 'n')) || 0;
     var nuevos = {};
     var n = 0;
@@ -160,6 +203,7 @@ function guardarUltimaValida(texto) {
       n++;
     }
     nuevos[PROP_ULTIMA + 'n'] = String(n);
+    nuevos[PROP_ULTIMA_HUELLA] = huella;
     props.setProperties(nuevos, false);
     for (var j = n; j < anterior; j++) props.deleteProperty(PROP_ULTIMA + j);
   } finally {
@@ -273,7 +317,7 @@ function armarRegistro(tipo, d, prefijo) {
   r.estado = 'pendiente';
   r.fecha_envio = fechaIso(new Date());
   if (tipo === 'agente') {
-    var internacional = String(d.presencia).trim().indexOf('Internacional') === 0;
+    var internacional = esInternacional(d.presencia);
     r.capa = internacional ? 'Internacional' : 'Perú';
     r.pais = internacional ? (ausente(d.pais) ? '' : comoTexto(d.pais)) : 'Perú';
     r.verificado = 'no';
@@ -316,7 +360,7 @@ function enviarCorreo(destino, asunto, cuerpo) {
 // Avisos a proponentes: si queda poca cuota diaria, se encolan en _cola para el día siguiente.
 function avisarProponente(destino, asunto, cuerpo) {
   if (MailApp.getRemainingDailyQuota() < CUOTA_MINIMA) {
-    hojaCola().appendRow([fechaIso(new Date()), comoTexto(destino), comoTexto(asunto), comoTexto(cuerpo)]);
+    encolar([[destino, asunto, cuerpo, 0]]);
     return;
   }
   enviarCorreo(destino, asunto, cuerpo);
@@ -334,34 +378,65 @@ function hojaCola() {
   return hoja;
 }
 
+// Agrega avisos [destino, asunto, cuerpo, intentos] al final de _cola bajo un candado corto.
+// Si el candado no llega a tiempo se agrega igual: perder el aviso es peor que una carrera improbable.
+function encolar(avisos) {
+  if (!avisos.length) return;
+  var filas = avisos.map(function (a) {
+    return [fechaIso(new Date()), comoTexto(a[0]), comoTexto(a[1]), comoTexto(a[2]), Number(a[3]) || 0];
+  });
+  var lock = LockService.getScriptLock();
+  var conCandado = lock.tryLock(ESPERA_LOCK_MS);
+  try {
+    var hoja = hojaCola();
+    hoja.getRange(hoja.getLastRow() + 1, 1, filas.length, COLUMNAS_COLA.length).setValues(filas);
+  } finally {
+    if (conCandado) lock.releaseLock();
+  }
+}
+
+// Saca un lote de _cola bajo un candado corto, lo envía sin candado y reencola los fallos
+// (un destinatario rechazado se descarta tras MAX_INTENTOS_COLA intentos; no bloquea al resto).
 function despacharCola() {
   var hoja = libro().getSheetByName('_cola');
   if (!hoja || hoja.getLastRow() < 2) return;
+  var cupo = Math.min(MAX_LOTE_COLA, MailApp.getRemainingDailyQuota() - CUOTA_MINIMA + 1);
+  if (cupo <= 0) return;
+
+  var lote;
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(ESPERA_LOCK_MS)) return;
   try {
-    var filas = hoja.getRange(2, 1, hoja.getLastRow() - 1, COLUMNAS_COLA.length).getValues();
-    var enviados = 0;
-    for (var i = 0; i < filas.length; i++) {
-      if (MailApp.getRemainingDailyQuota() < CUOTA_MINIMA) break;
-      try {
-        enviarCorreo(String(filas[i][1]), String(filas[i][2]), String(filas[i][3]));
-      } catch (err) {
-        console.error('cola: ' + err);
-        break;
-      }
-      enviados++;
-    }
-    if (enviados) hoja.deleteRows(2, enviados);
+    var total = hoja.getLastRow() - 1;
+    if (total < 1) return;
+    var n = Math.min(cupo, total);
+    lote = hoja.getRange(2, 1, n, COLUMNAS_COLA.length).getValues();
+    hoja.deleteRows(2, n);
   } finally {
     lock.releaseLock();
   }
+
+  var pendientes = [];
+  lote.forEach(function (f) {
+    var aviso = [String(f[1]), String(f[2]), String(f[3]), Number(f[4]) || 0];
+    if (MailApp.getRemainingDailyQuota() < CUOTA_MINIMA) { pendientes.push(aviso); return; }
+    try {
+      enviarCorreo(aviso[0], aviso[1], aviso[2]);
+    } catch (err) {
+      console.error('cola: ' + err);
+      aviso[3]++;
+      if (aviso[3] < MAX_INTENTOS_COLA) pendientes.push(aviso);
+    }
+  });
+  encolar(pendientes);
 }
 
 /* ---------- Disparadores ---------- */
 
 // Disparador instalable "Al editar" (lo crea instalarDisparadores). No se llama onEdit para no
 // ejecutarse también como disparador simple, que no puede enviar correos.
+// Avisa al proponente solo si `estado` (aprobado/rechazado) difiere de `aviso_enviado`, y luego lo anota:
+// pegar varias celdas o repetir el mismo estado no reenvía correos.
 function alEditar(e) {
   if (!e || !e.range) return;
   var hoja = e.range.getSheet();
@@ -376,8 +451,11 @@ function alEditar(e) {
   var c0 = e.range.getColumn();
   var c1 = c0 + e.range.getNumColumns() - 1;
   if (!colEstado || colEstado < c0 || colEstado > c1) return;
-  var unaCelda = e.range.getNumRows() === 1 && e.range.getNumColumns() === 1;
-  if (unaCelda && e.oldValue !== undefined && e.oldValue === e.value) return;
+  var colAviso = encabezados.indexOf('aviso_enviado') + 1;
+  if (!colAviso) {
+    avisarEstructura([nombre + '.aviso_enviado']);
+    return;
+  }
 
   var f0 = Math.max(2, e.range.getRow());
   var f1 = e.range.getRow() + e.range.getNumRows() - 1;
@@ -388,7 +466,12 @@ function alEditar(e) {
 
   registros.forEach(function (r, i) {
     if (r.estado !== 'aprobado' && r.estado !== 'rechazado') return;
-    if (r.estado === 'aprobado' && colFecha) hoja.getRange(f0 + i, colFecha).setValue(fechaIso(new Date()));
+    var fila = f0 + i;
+    if (r.estado === 'aprobado' && colFecha && ausente(r.fecha_aprobacion)) {
+      hoja.getRange(fila, colFecha).setValue(fechaIso(new Date()));
+    }
+    if (String(r.aviso_enviado).trim() === r.estado) return;
+    hoja.getRange(fila, colAviso).setValue(r.estado);
     var destino = String(r.email_proponente || '').trim();
     if (!destino) return;
     var nombreProponente = String(r.nombre_proponente || '').trim();
@@ -408,11 +491,12 @@ function alEditar(e) {
   cache.remove(CLAVE_CACHE);
 }
 
-// Disparador diario: despacha la cola y, el 5 de enero (hora de Lima), envía el recordatorio anual.
+// Disparador diario: despacha la cola y, desde el 5 de enero (hora de Lima) y una sola vez por año,
+// envía el recordatorio anual. instalarDisparadores marca el año en curso si ya pasó el 5 de enero.
 function recordatorioAnual() {
-  despacharCola();
+  try { despacharCola(); } catch (err) { console.error('recordatorioAnual/cola: ' + err); }
   var hoy = new Date();
-  if (Utilities.formatDate(hoy, ZONA_HORARIA, 'MM-dd') !== '01-05') return;
+  if (!yaEsDiaDeRecordatorio(hoy)) return;
   var anio = Number(Utilities.formatDate(hoy, ZONA_HORARIA, 'yyyy'));
   var props = PropertiesService.getScriptProperties();
   if (props.getProperty(PROP_RECORDATORIO) === String(anio)) return;
@@ -426,4 +510,8 @@ function recordatorioAnual() {
   });
   enviarCorreo(MODERADOR, mensaje.asunto, mensaje.cuerpo);
   props.setProperty(PROP_RECORDATORIO, String(anio));
+}
+
+function yaEsDiaDeRecordatorio(fecha) {
+  return Utilities.formatDate(fecha, ZONA_HORARIA, 'MM-dd') >= '01-05';
 }

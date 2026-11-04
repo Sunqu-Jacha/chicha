@@ -8,9 +8,9 @@ Hazlo en una **hoja de ensayo** (no la real), con la cuenta sunqujacha@gmail.com
 2. En el editor, ejecuta `crearEstructura` y acepta los permisos. Comprueba:
    - [ ] Existen las pestañas `Agentes`, `Convocatorias`, `Sugerencias`, `Listas` y `_cola` (esta última oculta).
    - [ ] **Archivo › Configuración** muestra la zona horaria `(GMT-05:00) Lima`.
-   - [ ] La fila 1 está congelada y, al editar un encabezado o las columnas `id`, `fecha_envio`, `fecha_aprobacion` u `origen`, aparece una advertencia.
+   - [ ] La fila 1 está congelada y aparece una advertencia al editar un encabezado o una columna de control: `id`, `fecha_envio`, `fecha_aprobacion`, `aviso_enviado` y, solo en `Agentes`, `origen` (`Convocatorias` no tiene `origen`).
    - [ ] `estado`, `capa`, `verificado`, `tipo_entidad`, `presencia`, `departamento` (Agentes) y `tipo` (Convocatorias) tienen menú desplegable.
-   - [ ] Hay 2 agentes y 1 convocatoria de ejemplo con `estado = aprobado` y `origen = carga inicial`.
+   - [ ] Hay 2 agentes de ejemplo con `estado = aprobado` y `origen = carga inicial`, y 1 convocatoria de ejemplo con `estado = aprobado`.
    - [ ] Ejecutar `crearEstructura` otra vez no cambia nada (no duplica los ejemplos).
 3. Ejecuta `instalarDisparadores`. En **Activadores** (reloj del menú izquierdo) aparecen `alEditar` (al editar la hoja) y `recordatorioAnual` (diario).
 4. **Implementar › Nueva implementación › Aplicación web** (ejecutar como: yo; acceso: cualquier usuario). Copia la URL que termina en `/exec`.
@@ -39,10 +39,11 @@ Hazlo en una **hoja de ensayo** (no la real), con la cuenta sunqujacha@gmail.com
    - [ ] Se escribe `fecha_aprobacion` con la fecha de hoy.
    - [ ] Llega el correo "Prueba ya está en Chicha" con enlace a `#/agente/<id>`.
    - [ ] `<URL>?accion=datos` ahora incluye el agente "Prueba".
+   - [ ] `aviso_enviado` queda en `aprobado`. Copia esa celda de `estado` y pégala sobre un rango que la incluya junto con el `estado` de un agente de ejemplo (ya aprobado): **no** llega ningún correo y `fecha_aprobacion` no cambia.
 10. Envía otro `POST` válido como el del paso 6 y, en esa fila nueva, escribe algo en `motivo_rechazo` y **después** cambia `estado` a `rechazado`:
     - [ ] Llega el correo de rechazo con el motivo.
 11. Renombra un encabezado de `Agentes` (por ejemplo `ciudad` → `Ciudad`) (la edición vacía la caché) y abre `<URL>?accion=datos` dos veces:
     - [ ] Sigue devolviendo la versión anterior (con "Prueba").
     - [ ] Llega **1** correo "[Chicha] Revisa la estructura de la hoja" (no uno por consulta).
     - [ ] Restaura el nombre `ciudad`.
-12. Recordatorio anual: en el editor ejecuta `recordatorioAnual`. Fuera del 5 de enero no envía nada (solo despacha la cola `_cola` si tiene filas).
+12. Recordatorio anual: en el editor ejecuta `recordatorioAnual`. Este año no envía nada, porque `instalarDisparadores` marca el año en curso si ya pasó el 5 de enero; solo despacha la cola `_cola` si tiene filas. El primer recordatorio sale el próximo 5 de enero (o el primer día siguiente en que el disparador corra).

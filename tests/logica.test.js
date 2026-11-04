@@ -9,7 +9,7 @@ const LISTAS = {
   ofrece: ['Formación', 'Financiamiento y fondos'],
   sectores: ['Música', 'Artes visuales'],
   tiposEntidad: ['Fundación / ONG', 'Centro cultural'],
-  presencia: ['Peruana', 'Internacional (sin sede en el Perú; solo capa Internacional)'],
+  presencia: ['Peruana', 'Internacional'],
   departamentos: ['Cusco', 'Lima'],
   tiposConvocatoria: ['fondo', 'premio'],
 };
@@ -244,4 +244,22 @@ test('R7: agente Internacional sin departamento no da error de departamento', ()
   laxo(e, {});
   const p = gs.validarEnvio('agente', Object.assign(agenteOk(), { departamento: '' }), LISTAS, APROBADOS);
   assert.equal(p.departamento, 'Este campo es obligatorio.');
+});
+
+test('R12: aviso_enviado es columna de control final y privada', () => {
+  assert.equal(gs.COLUMNAS_AGENTES.at(-1), 'aviso_enviado');
+  assert.equal(gs.COLUMNAS_CONVOCATORIAS.at(-1), 'aviso_enviado');
+  assert.ok(!gs.PUBLICAS_AGENTES.includes('aviso_enviado'));
+  assert.ok(!gs.PUBLICAS_CONVOCATORIAS.includes('aviso_enviado'));
+  const pub = gs.publicar([{ id: 'ag-1', estado: 'aprobado', aviso_enviado: 'aprobado' }], gs.PUBLICAS_AGENTES)[0];
+  assert.ok(!('avisoEnviado' in pub));
+});
+
+test('R11: esInternacional compara exacto con la etiqueta corta', () => {
+  assert.equal(gs.esInternacional('Internacional'), true);
+  assert.equal(gs.esInternacional(' Internacional '), true);
+  assert.equal(gs.esInternacional('Peruana'), false);
+  assert.equal(gs.esInternacional('Internacional (sin sede)'), false);
+  assert.equal(gs.esInternacional(undefined), false);
+  assert.equal(gs.esInternacional(['Internacional']), false);
 });

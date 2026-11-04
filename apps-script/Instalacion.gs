@@ -13,12 +13,12 @@ var TAXONOMIA = {
     'Patrimonio', 'Artesanía', 'Educación', 'Emprendimiento e innovación', 'Cultura comunitaria'
   ],
   tipos_entidad: [
-    'Pública (Estado, gobierno regional, municipalidad)', 'Privada / empresa / marca', 'Universidad o instituto',
+    'Pública', 'Privada / empresa / marca', 'Universidad o instituto',
     'Centro cultural', 'Fundación / ONG', 'Cooperación internacional / embajada', 'Incubadora / aceleradora',
     'Colectivo / red', 'Espacio público'
   ],
   presencia: [
-    'Peruana', 'Extranjera con sede en el Perú', 'Internacional (sin sede en el Perú; solo capa Internacional)'
+    'Peruana', 'Extranjera con sede en el Perú', 'Internacional'
   ],
   departamentos: [
     'Amazonas', 'Áncash', 'Apurímac', 'Arequipa', 'Ayacucho', 'Cajamarca', 'Cusco', 'Huancavelica', 'Huánuco',
@@ -55,7 +55,7 @@ function crearEstructura() {
     validarDesdeListas(agentes, 'tipo_entidad', listas, 'tipos_entidad');
     validarDesdeListas(agentes, 'presencia', listas, 'presencia');
     validarDesdeListas(agentes, 'departamento', listas, 'departamentos');
-    protegerControl(agentes, ['id', 'fecha_envio', 'fecha_aprobacion', 'origen']);
+    protegerControl(agentes, ['id', 'fecha_envio', 'fecha_aprobacion', 'origen', 'aviso_enviado']);
     idEjemplo = insertarAgentesEjemplo(agentes);
   }
 
@@ -63,7 +63,7 @@ function crearEstructura() {
     var convocatorias = nuevaHoja(ss, 'Convocatorias', COLUMNAS_CONVOCATORIAS);
     validarLista(convocatorias, 'estado', ESTADOS_REGISTRO);
     validarDesdeListas(convocatorias, 'tipo', listas, 'tipos_convocatoria');
-    protegerControl(convocatorias, ['id', 'fecha_envio', 'fecha_aprobacion']);
+    protegerControl(convocatorias, ['id', 'fecha_envio', 'fecha_aprobacion', 'aviso_enviado']);
     // Solo si el agente de ejemplo se creó ahora (si no, el vínculo apuntaría a un id inexistente).
     if (idEjemplo) insertarConvocatoriaEjemplo(convocatorias, idEjemplo);
   }
@@ -140,7 +140,10 @@ function filaPara(hoja, valores) {
 
 function insertarAgentesEjemplo(hoja) {
   var hoy = fechaIso(new Date());
-  var base = { estado: 'aprobado', verificado: 'no', fecha_envio: hoy, fecha_aprobacion: hoy, origen: 'carga inicial' };
+  var base = {
+    estado: 'aprobado', verificado: 'no', fecha_envio: hoy, fecha_aprobacion: hoy, origen: 'carga inicial',
+    aviso_enviado: 'aprobado'
+  };
   var a1 = Object.assign({}, base, {
     id: nuevoId('ag'), capa: 'Perú',
     nombre: 'Centro cultural de ejemplo',
@@ -156,7 +159,7 @@ function insertarAgentesEjemplo(hoja) {
     descripcion: 'Registro de ejemplo de la capa Internacional. Bórralo o archívalo antes del lanzamiento.',
     ofrece: 'Financiamiento y fondos', sectores: 'Audiovisual',
     tipo_entidad: 'Cooperación internacional / embajada',
-    presencia: 'Internacional (sin sede en el Perú; solo capa Internacional)',
+    presencia: 'Internacional',
     pais: 'España', ciudad: 'Madrid',
     web: URL_SITIO
   });
@@ -168,7 +171,7 @@ function insertarConvocatoriaEjemplo(hoja, agenteId) {
   var hoy = fechaIso(new Date());
   var anio = Number(Utilities.formatDate(new Date(), ZONA_HORARIA, 'yyyy')) + 1;
   var c = {
-    id: nuevoId('cv'), estado: 'aprobado', fecha_envio: hoy, fecha_aprobacion: hoy,
+    id: nuevoId('cv'), estado: 'aprobado', fecha_envio: hoy, fecha_aprobacion: hoy, aviso_enviado: 'aprobado',
     agente_id: agenteId,
     titulo: 'Convocatoria de ejemplo ' + anio, 'año': anio, tipo: 'fondo',
     ofrece: 'Financiamiento y fondos', sectores: 'Música',
@@ -187,4 +190,9 @@ function instalarDisparadores() {
   });
   ScriptApp.newTrigger('alEditar').forSpreadsheet(ss).onEdit().create();
   ScriptApp.newTrigger('recordatorioAnual').timeBased().everyDays(1).atHour(7).inTimezone(ZONA_HORARIA).create();
+  // Si ya pasó el 5 de enero, el recordatorio de este año no aplica: el primero sale el próximo 5 de enero.
+  var hoy = new Date();
+  if (yaEsDiaDeRecordatorio(hoy)) {
+    PropertiesService.getScriptProperties().setProperty(PROP_RECORDATORIO, Utilities.formatDate(hoy, ZONA_HORARIA, 'yyyy'));
+  }
 }
