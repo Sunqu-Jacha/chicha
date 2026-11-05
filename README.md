@@ -1,6 +1,6 @@
 # Chicha · Mapa de Emprendimiento
 
-Chicha es un directorio público y filtrable de agentes y convocatorias para el arte, la cultura y la educación en el Perú, una iniciativa de Sunqu Jach'a. Es un sitio estático (HTML, CSS y JavaScript con módulos ES, sin frameworks ni paso de compilación) cuyos datos viven en una hoja de Google Sheets servida por un Google Apps Script. Las propuestas llegan por formulario y quedan pendientes hasta que se moderan.
+Chicha es un directorio público y filtrable de agentes y convocatorias para el arte, la cultura y la gestión de proyectos con impacto social en el Perú, una iniciativa de Sunqu Jach'a. Es un sitio estático (HTML, CSS y JavaScript con módulos ES, sin frameworks ni paso de compilación) cuyos datos viven en una hoja de Google Sheets servida por un Google Apps Script. Las propuestas llegan por formulario y quedan pendientes hasta que se moderan.
 
 ## Correr en local y pruebas
 

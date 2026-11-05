@@ -4,7 +4,7 @@ export function renderSobre() {
   <p class="sobre__lema"><span class="caja-negra">Juntos, construimos el Perú</span></p>
 
   <h2>Qué es</h2>
-  <p>Chicha es un mapa de emprendimiento: un directorio público y filtrable de agentes para el arte, la cultura y la educación en el Perú. Reúne instituciones públicas, empresas y marcas, universidades, centros culturales, fundaciones, cooperación internacional, incubadoras, colectivos y espacios públicos.</p>
+  <p>Chicha es un mapa de emprendimiento: un directorio público y filtrable de agentes para el arte, la cultura y la gestión de proyectos con impacto social en el Perú. Reúne instituciones públicas, empresas y marcas, universidades, centros culturales, fundaciones, cooperación internacional, incubadoras, colectivos y espacios públicos.</p>
   <p>Está pensado para emprendedores culturales que se preguntan quién puede darles financiamiento, formación, espacio o difusión. También incluye un calendario de convocatorias y una sección con oportunidades internacionales abiertas a postulantes desde el Perú.</p>
 
   <h2>Quién lo impulsa</h2>
