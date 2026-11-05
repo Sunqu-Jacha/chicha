@@ -17,7 +17,7 @@ export function renderPortada(datos, hoy = hoyLima()) {
   return `<section class="portada" aria-labelledby="portada-titulo">
   <h1 class="portada__titulo" id="portada-titulo">CHICHA</h1>
   <p class="portada__sub">Mapa de emprendimiento</p>
-  <p class="portada__bajada"><span class="caja-negra">AGENTES para el arte, la cultura y la educación en el Perú</span></p>
+  <p class="portada__bajada"><span class="caja-negra">AGENTES para el arte, la cultura y la gestión de proyectos con impacto social en el Perú</span></p>
   <form class="buscador" role="search" data-buscar data-vista="explorar">
     <label for="q-portada">Busca por nombre, descripción o ciudad</label>
     <div class="buscador__fila">
